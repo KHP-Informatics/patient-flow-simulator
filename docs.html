@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui"> -->
+
+  <meta name="description" content="Hospital flow simulator" />
+
+  <link href="css/style.css" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="src/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+  <title>Hospital flow simulation</title>
+
+  <script type="text/javascript" src="src/underscore-min.js"></script>
+ 
+ 
+  <script type="text/javascript" src="src/graph.js"></script>
+
+      <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+  
+<body>
+<center><h1>Patient Flow Simulator <small>Documentation</small></h1></center>
+<center><h2><small><a href="./index.html">Simulator</a></small></h2></center>
+
+  <hr />
+
+  <div class="container-fluid">
+  <div class="row">
+  <div class="col-md-12">
+
+<h3>Simulation overview</h3>
+  <p>This simulation allows you to manage a virtual hospital, analyse the effects of your decisions on performance, and try to iteratively implement changes based on this analysis. The aim is to achieve the highest performance for the lowest cost.</p>
+  <p>Simulated patients are designed to mimic the actual movements of patients through a typical acute hospital. Patients are generated at random, so no two simulations will ever be the same. By default, the parameters are balanced so that 1 step of the simulation is 1 hour in the hospital. It isn't required that the steps are interpreted this way, but make sure you're consistent.</p>
+
+
+  <hr />
+  <h3>Ward management</h3>
+  <p>In this section you can change the settings for each ward in the hospital, and also change some parameters
+  for the simulation itself.</p>
+  <h4>Ward list</h4>
+  <p>This is a list of all the wards in your hospital. Click a ward on this list to select it for editing in the "Editing" panel. The currently selected ward is highlighted in green.</p>
+  <h4>Editing</h4>
+  <p>This is where you make management decisions about each ward. There are 5 decisions to make. Remember to click the save button after changing the settings.</p>
+    <dl>
+      <dt>Capacity</dt>
+      <dd>The number of beds in the ward. Cannot be zero.</dd>
+      <dt>Resources</dt>
+      <dd>Resources is a general term for all requirements other than beds, e.g. staff, medicine, equipment.
+      The number of resources available doesn't have a unit, it's a relative measure. Think of it as the total cost per hour for whatever resources the ward needs.</dd>
+      <dt>Resource policy</dt>
+      <dd>How should the available resources be divided between the admitted patients? The options are "Equal", "Highest first" and "Lowest first". With an "equal" policy, the available resources are divided evenly between all patients. "Highest first" spends more resources treating patients that need more care, potentially delaying less serious patients. "Lowest first" starts by treating the least costly patients, potentially not leaving enough resources for high-need cases but also potentially allowing a large number of simple cases to be discharged quickly.</dd>
+      <dt>Queue policy</dt>
+      <dd>If there are more patients that need to be admitted to a ward than there are beds available, how should the choice of who to admit be made? Options are "First-come, first-served", "Highest need first" and "Lowest need first". This means some patients will not be admitted. These patients (that are waiting but are not admitted) will remain in the queue untill they are admitted. With a "First-come, first-served" policy, there is no queue jumping for any reason, regardless of the urgency of the patients waiting. "Highest need first" prioritises urgent cases. "Lowest need first" priortises simple cases.</dd>
+      <dt>Accept overflow</dt>
+      <dd>If a ward has empty beds, should it make these beds available to accept patients from other wards that are at capacity and need to free up space? The options are "Always" and "Never". If these beds are later needed, they can only become available by transferring the (overflow) patient somewhere else.</dd>
+    </dl>
+    <h4>Simulation setup</h4>
+    <p>Here you can start the simulation, and also change some parameters that would increase or decrease the pressure on your hospital. By default the settings reproduce a fairly typical week with typically 3 admissions from the Emergency Department per hour. You should not use these settings as a way to "improve" the performance of your hospital.</p>
+    <p>Click the green "Run" button to start the simulation.</p>
+    <dl>
+      <dt>Simulation steps</dt>
+      <dd>Total number of steps. By default, 1 step is equivalent to 1 hour in the hospital so 672 steps is 1 week.</dd>
+      <dt>Max patients</dt>
+      <dd>Patients arrive at random, so we don't know how many will arrive or when. This parameter sets a limit on the total number of patients that will ever be created in the simulation. After this point no more patients will arrive but any patients currently in the hospital will continue their visit.</dd>
+      <dt>Min arrivals per step</dt>
+      <dd>What is the fewest patients that can arrive in the Emergency Department per step of the simulation. Reasonable bounds depend on how long you're taking 1 step to mean. By default 1 step is 1 hour, so 1 admission is reasonable. The simulation is slightly unstable if this is zero.</dd>
+      <dt>Max arrivals per step</dt>
+      <dd>What is the most patients that can arrive in the Emergency Department per step of the simulation. Reasonable bounds depend on how long you're taking 1 step to mean. By default 1 step is 1 hour, so 4 admissions are reasonable.</dd>
+      <dt>Emergency wait target</dt>
+      <dd>Equivalent to the UK national 4-hour waiting time standard. By default this is 4 as 1 step is interpreted as 1 hour. This does not affect the simulation itself, but is used in the analysis.</dd>
+    </dl>
+
+
+  <hr />
+  <h3>Analysis</h3>
+  <p>Find out how well your hospital is performing. Before you run the simulation the first time, most of these tabs will be empty. The main exception is the Network tab, which initially shows the model used by the simulation to generate patients. All tabs are documented in blue information boxes in the simulator itself.</p>
+  
+
+</div>
+</div>
+</div>
+
+  <script type="text/javascript" src="src/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="src/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+
+
+
+</body>
+</html>

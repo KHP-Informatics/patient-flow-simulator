@@ -1,0 +1,49 @@
+body { 
+  font: 14px helvetica neue, helvetica, arial, sans-serif;
+}
+
+#cy {
+  height: 500px;
+  width: 100%;
+  float: left;
+  display: inline;
+  background-color: #EDF1FA;
+}
+
+.plot{
+  height: 300px;
+}
+
+
+.plotcontainer {
+  height:300px;
+  width: 100%;
+  float: left;
+  display: inline;
+}
+
+.selected {
+  background-color: #baf2ba !important;
+}
+
+.active-analysis {
+  background-color: #5cb85c !important;
+  border-color: #5cb85c !important;
+}
+
+.panel-help {
+  width: 50%;
+  margin-left: 25%;
+}
+
+.inline {
+  display: inline-block;
+}
+
+.tab-pane {
+  padding-top: 15px;
+}
+
+.spacer {
+  padding-bottom: 50px;
+}

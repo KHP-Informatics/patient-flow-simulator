@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui"> -->
+
+  <meta name="description" content="Hospital flow simulator" />
+
+  <link href="css/style.css" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="src/lib/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+  <title>Hospital flow simulation</title>
+  <script src="src/lib/Chart.bundle.min.js"></script>
+  <script type="text/javascript" src="src/lib/underscore-min.js"></script>
+  <script src="src/lib/utils.js"></script>
+  <script type="text/javascript" src="src/lib/FastPriorityQueue.js"></script>
+
+  <!-- very simple config -->
+  <!-- <script type="text/javascript" src="src/config/ward_config.js"></script> -->
+  <!-- <script type="text/javascript" src="src/config/patient_config.js"></script> -->
+  <!-- <script type="text/javascript" src="src/config/simulation_config.js"></script> -->
+
+  <!-- first example config -->
+  <script type="text/javascript" src="src/config/ward_config_medium.js"></script>
+  <script type="text/javascript" src="src/config/patient_config_medium.js"></script>
+  <script type="text/javascript" src="src/config/simulation_config_medium.js"></script>
+
+
+  <script type="text/javascript" src="src/Simulation.js"></script>
+  <script type="text/javascript" src="src/interactive_simulation.js"></script>
+  <script src="src/lib/cytoscape.js-2.7.14/cytoscape.min.js"></script>
+
+  <script type="text/javascript" src="src/graph.js"></script>
+
+      <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+  
+<body>
+<center><h1>Patient Flow Simulator</h1></center>
+<center><h2><small><a href="./docs.html">Help</a></small></h2></center>
+<hr />
+  <div class="container-fluid" id="editor">
+  <h3>Ward management</h3>
+  <p>Distribute resources in your hospital and make policy decisions. Then click Run!</p>
+    <div class="row" id="config-editor">
+      <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Ward list</h3>
+          </div>
+          <div class="panel-body" id="ward-list-container">
+            <div class="list-group" id="ward-list">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title" id="selected-ward-name">Select a ward to edit</h3>
+          </div>
+          <div class="panel-body" id="ward-edit-content">
+            <input type="hidden" name="selected-ward" id="selected-ward" value="">
+
+            <label for="ward-capacity">Capacity</label>
+            <input type="text" min="1" class="form-control" id="ward-capacity">
+
+            <label for="ward-resources">Resources</label>
+            <input type="text" min="1" class="form-control" id="ward-resources">
+
+            <label for="ward-resource-policy">Resource policy</label>
+            <select class="form-control" id="ward-resource-policy">
+              <option value="divide_evenly">Equal</option>
+              <option value="highest_first">Highest first</option>
+              <option value="lowest_first">Lowest first</option>
+            </select>
+
+            <label for="ward-queue-policy">Queue policy</label>
+            <select class="form-control" id="ward-queue-policy">
+              <option value="SimpleQueue">First-come, first-served</option>
+              <option value="MaxPQ">Highest need first</option>
+              <option value="MinPQ">Lowest need first</option>
+            </select>
+
+            <label for="ward-overflow-policy">Accept overflow</label>
+            <select class="form-control" id="ward-overflow-policy">
+              <option value="always">Always</option>
+              <option value="never">Never</option>
+            </select>
+
+            <button class="btn btn-primary" type="button" id="save-ward-changes" onclick="save_ward_changes()">Save</button>
+
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+      <div class="panel panel-default">
+          <div class="panel-heading">
+          <h3 class="panel-title">Simulation setup</h3>
+        </div>
+        <div class="panel-body" id="simulation-edit-content">
+
+            <label for="simulation-steps">Simulation steps</label>
+            <input type="text" min="1" class="form-control" id="simulation-steps">
+
+            <label for="patient-creation-limit">Max patients</label>
+            <input type="text" min="1" class="form-control" id="patient-creation-limit">
+
+            <label for="patient-batch-min">Min arrivals per step</label>
+            <input type="text" min="1" class="form-control" id="patient-batch-min">
+
+            <label for="patient-batch-max">Max arrivals per step</label>
+            <input type="text" min="1" class="form-control" id="patient-batch-max">
+
+            <label for="simulation-emergency-target">Emergency wait target</label>
+            <input type="text" min="1" class="form-control" id="simulation-emergency-target">
+            <br>
+          <button class="btn btn-success" type="button" onclick="run(ward_config, patient_config, simulation_config)">Run simulation</button>
+        </div>
+      </div>
+      </div>
+    </div>
+
+  </div> <!-- end of editor container -->
+
+  <div class="container-fluid">
+  <!-- Nav tabs -->
+  <div>
+  <hr />
+  <h3>Analysis</h3>
+  <p>Find out how well your hospital is performing.</p>
+  <ul class="nav nav-tabs">
+    <li role="presentation" class="active"><a href="#summary-tab" data-toggle="tab">Summary</a></li>
+    <li role="presentation"><a href="#network-tab" data-toggle="tab" id="network-tab-link">Network</a></li>
+    <li role="presentation"><a href="#waiting-tab" data-toggle="tab">Waiting time</a></li>
+    <li role="presentation"><a href="#occupancy-tab" data-toggle="tab">Occupancy</a></li>
+    <li role="presentation"><a href="#top-paths-tab" data-toggle="tab">Top paths</a></li>
+    <li role="presentation"><a href="#path-distribution-tab" data-toggle="tab">Path length</a></li>
+  </ul>
+  </div> 
+
+
+  <!-- Tab panes -->
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane active" id="summary-tab">
+    <!-- help text -->
+      <div class="panel panel-primary panel-help">
+        <div class="panel-heading">
+          <h3 class="panel-title">Summary statistics</h3>
+        </div>
+        <div class="panel-body">
+          Overall properties of the hospital and any simulated patients. If there are still patients in the hospital when the simulation ends, consider increasing the number of steps.
+        </div>
+      </div>
+      
+
+      <div class="panel panel-default" id="resource-summary">
+        <!-- Default panel contents -->
+        <div class="panel-heading">Hospital summary</div>
+
+        <!-- List group -->
+        <ul class="list-group">
+          <li class="list-group-item">Total resources used: <div class="inline" id="total-resource-use"></div></li>
+          <li class="list-group-item">Total bed capacity: <div class="inline" id="total-capacity"></div></li>
+        </ul>
+      </div>
+
+      <div class="panel panel-default" id="performance-summary">
+        <!-- Default panel contents -->
+        <div class="panel-heading">Performance summary</div>
+
+        <!-- List group -->
+        <ul class="list-group">
+          <li class="list-group-item">Mean Emergency wait: <div class="inline" id="mean-wait-time"></div></li>
+          <li class="list-group-item">Emergency visits meeting target: <div class="inline" id="patients-on-target"></div></li>
+        </ul>
+      </div>
+
+
+      <div class="panel panel-default" id="simulation-summary">
+        <!-- Default panel contents -->
+        <div class="panel-heading">Patient summary</div>
+        <!-- List group -->
+        <ul class="list-group">
+        <li class="list-group-item">Simulation complete: <div class="inline" id="simulation-complete"></div></li>
+        <li class="list-group-item">Patients simulated: <div class="inline" id="patients-simulated"></div></li>
+        <li class="list-group-item">Patients admitted: <div class="inline" id="patients-admitted"></div></li>
+        <li class="list-group-item">Patients discharged: <div class="inline" id="patients-discharged"></div></li>
+        <li class="list-group-item">Patients in hospital when simulation ended: <div class="inline" id="patients-remaining"></div></li>
+        <li class="list-group-item">Total transfers: <div class="inline" id="total-transfers"></div></li>
+        <li class="list-group-item">Overflow transfers: <div class="inline" id="overflow-transfers"></div></li>
+        <li class="list-group-item">Unique paths: <div class="inline" id="total-unique-paths"></div></li>
+        
+        </ul>
+      </div>
+
+    </div>
+
+    <div role="tabpanel" class="tab-pane" id="network-tab">
+        <div id="networkcontainer">
+        <!-- help text -->
+          <div class="panel panel-primary panel-help">
+            <div class="panel-heading">
+              <h3 class="panel-title">The patient flow network</h3>
+            </div>
+            <div class="panel-body">
+              Nodes represent wards and directed edges represent the movement of patients between wards. Edge weight (thickness) is the relative proportion of all transfers that
+              went through each edge. Use the analysis buttons below to scale node size based on centrality.
+            </div>
+          </div>
+        <div id="network-controls">
+            <h4>Network analysis</h4>
+            <button class="btn btn-primary" onclick="cy.fit()">Reset view</button>
+            <button class="btn btn-primary" onclick="network_analysis('reset')">Reset analysis</button>
+            <button id="total" class="btn btn-primary" onclick="network_analysis('total')">Degree</button>
+            <button id="indegree" class="btn btn-primary" onclick="network_analysis('indegree')">Indegree</button>
+            <button id="outdegree" class="btn btn-primary" onclick="network_analysis('outdegree')">Outdegree</button>
+            <button id="betweenness" class="btn btn-primary" onclick="network_analysis('betweenness')">Betweenness</button>
+            <button id="closeness" class="btn btn-primary" onclick="network_analysis('closeness')">Closeness</button>
+          </div>
+          <div id="cy"></div>
+          
+        </div>
+        
+    </div>
+
+    <div role="tabpanel" class="tab-pane" id="waiting-tab">
+      <div id="performance-charts">
+      <!-- help text -->
+          <div class="panel panel-primary panel-help">
+            <div class="panel-heading">
+              <h3 class="panel-title">Emergency performance</h3>
+            </div>
+            <div class="panel-body">
+              Analyse the distribution of Emergency Department waiting time. 
+            </div>
+          </div>
+        
+            <div class="plotcontainer" id="waiting">
+              <canvas id="waiting-plot" class="plot"></canvas>
+              <!-- canvas element will be deleted in JS and created with this ID -->
+            </div>
+        </div>
+    </div>
+
+    <div role="tabpanel" class="tab-pane" id="occupancy-tab">
+          <div class="panel panel-primary panel-help">
+            <div class="panel-heading">
+              <h3 class="panel-title">Ward occupancy</h3>
+            </div>
+            <div class="panel-body">
+              Analyse the occupancy of all wards over time. Click the legend to show/hide wards. 
+            </div>
+          </div>
+
+      <div class="plotcontainer" id="occupancy">
+      <canvas id="occupancy-plot" class="plot"></canvas> 
+      <!-- canvas element will be deleted in JS and created with this ID -->
+      </div>
+    </div>
+
+    <div role="tabpanel" class="tab-pane" id="top-paths-tab">
+      <!-- help text -->
+      <div class="panel panel-primary panel-help">
+        <div class="panel-heading">
+          <h3 class="panel-title">Observed paths</h3>
+        </div>
+        <div class="panel-body">
+          Analyse the actual paths taken by patients through your hospital. 
+        </div>
+      </div>
+    
+      <div class="panel panel-default">
+        <div class="panel-heading">Most common paths</div>
+
+        <!-- Table -->
+        <table class="table table-bordered" id="top-paths-list"></table>
+      </div>
+
+    </div>
+
+    <div role="tabpanel" class="tab-pane" id="path-distribution-tab">
+      <div class="panel panel-primary panel-help">
+        <div class="panel-heading">
+          <h3 class="panel-title">Path length</h3>
+        </div>
+        <div class="panel-body">
+          Analyse the frequency of paths by length. 
+        </div>
+      </div>
+
+      <div class="plotcontainer" id="path-length">
+      <canvas id="path-length-plot" class="plot"></canvas>
+      <!-- canvas element will be deleted in JS and created with this ID -->
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<div class="spacer"></div>
+
+
+
+  <script type="text/javascript" src="src/lib/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="src/lib/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="src/plot.js"></script>
+      
+  <script type="text/javascript">
+    init_user_interface(patient_config, ward_config, 'cy')
+  </script>
+
+
+</body>
+</html>
