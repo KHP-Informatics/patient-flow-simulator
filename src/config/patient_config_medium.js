@@ -84,10 +84,12 @@ var patient_config = {
 			max:10,
 			lambda:3
 		},
-		"Exit" : {
-			min: Infinity,
-			max: Infinity,
-		},
+		// this is now hardcoded in the patient generator to support saving as JSON,
+		// which does not support Infinity
+		// "Exit" : {
+		// 	min: Infinity,
+		// 	max: Infinity,
+		// },
 		"Pool" : {
 			min: 1,
 			max: 1,

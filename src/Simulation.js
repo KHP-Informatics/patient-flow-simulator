@@ -308,6 +308,10 @@ function Ward(config){
 function PatientGenerator(config){
 	//defaults for properties set in config
 	this.config = config
+	this.config.wait_limits.Exit = {
+		 	min: Infinity,
+		 	max: Infinity,
+		 }
 	//internal properties
 	this.patients_created = 0
 

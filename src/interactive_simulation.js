@@ -1,7 +1,7 @@
 // interact with GUI to control simulation
 //wards are defined by ward_config.js
 
-function run(ward_config, patient_config, simulation_config){
+function run(ward_config, patient_config, simulation_config, virtual_wards){
 	save_patient_changes() //get changes to configuration from editor
 	save_simulation_changes()
 	default_simulation_summary()
@@ -12,11 +12,15 @@ function run(ward_config, patient_config, simulation_config){
 		wards[el.name] = new Ward(el)
 		ward_names.push(el.name)
 	})
+	virtual_wards.forEach(function(el){
+		wards[el.name] = new Ward(el)
+		ward_names.push(el.name)
+	})
 
 	var patient_generator = new PatientGenerator(patient_config)
-	var patients = []
+	patients = []
 
-	var simulation_data = {results:{}, config: ward_config}
+	var simulation_data = {results:{}, config: ward_config, virtual_wards: virtual_wards}
 	ward_names.forEach(function(name){
 		simulation_data.results[name] = []
 	})	
@@ -339,3 +343,44 @@ function showEmergencyWaitVsTarget(patients, target, text_output){
 	$("#" + text_output).text(percent_on_target.toFixed(2) + "%")
 }
 
+//change to a different preset
+function change_preset(){
+	var preset = $('#select-hospital-preset').val()
+}
+
+//upload a configuration file
+function upload_config(){
+	var fileInput = document.getElementById('file_upload');
+	var file = fileInput.files[0];
+	console.log('processing upload of:' + file.name + ' detected type: ' + file.type);
+	var reader = new FileReader();
+	//define function to run when reader is done loading the file
+	reader.onload = function(e) {
+		//detect the type of file
+		var textType = /text.*/
+		if(file.type.match(textType) ){
+			console.log('file type ok ')
+			uploaded_config = JSON.parse(reader.result)
+			patient_config = uploaded_config.patient_config
+			ward_config = uploaded_config.ward_config
+			simulation_config = uploaded_config.simulation_config
+			init_user_interface(patient_config, ward_config, 'cy')
+			$("#change-hospital-modal").modal('hide')
+			
+		} else {
+			alert("Error: Not a valid file type.")
+		}
+
+	}
+	
+	//now load the files
+	reader.readAsText(file);
+}
+
+//save the current config to file
+function download_current_config(){
+	var config = {"patient_config" : patient_config, "ward_config" : ward_config, "simulation_config" : simulation_config}
+	var config_text = JSON.stringify(config)
+	var blob = new Blob([config_text], {type: "text/plain;charset=utf-8"});
+	saveAs(blob, 'patient_flow_config.json.txt');
+}

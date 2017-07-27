@@ -11,13 +11,6 @@
 //definition of wards
 var ward_config = [
 	{
-		name: "Pool",
-		capacity: Infinity,
-		resources: 1,
-		resource_distribution: "divide_evenly",
-		accept_overflow: "never"
-	},
-	{
 		name: "Emergency",
 		capacity: 50,
 		resources: 50,
@@ -42,14 +35,6 @@ var ward_config = [
 	// 	resource_distribution: "divide_evenly",
 	// 	accept_overflow: "never"
 	// },
-	{
-		name: "Exit",
-		capacity: Infinity,
-		resources: 1,
-		resource_distribution: "divide_evenly",
-		accept_overflow: "never",
-		fill_colour: "#083D77"
-	},
 	{
 		name: "Surgery",
 		capacity: 10,

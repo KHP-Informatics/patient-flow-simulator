@@ -25,11 +25,13 @@
   <script type="text/javascript" src="src/config/ward_config_medium.js"></script>
   <script type="text/javascript" src="src/config/patient_config_medium.js"></script>
   <script type="text/javascript" src="src/config/simulation_config_medium.js"></script>
+  <script type="text/javascript" src="src/config/virtual_wards.js"></script>
 
 
   <script type="text/javascript" src="src/Simulation.js"></script>
   <script type="text/javascript" src="src/interactive_simulation.js"></script>
   <script src="src/lib/cytoscape.js-2.7.14/cytoscape.min.js"></script>
+  <script type="text/javascript" src="src/lib/FileSaver.min.js"></script>
 
   <script type="text/javascript" src="src/graph.js"></script>
 
@@ -121,7 +123,9 @@
             <label for="simulation-emergency-target">Emergency wait target</label>
             <input type="text" min="1" class="form-control" id="simulation-emergency-target">
             <br>
-          <button class="btn btn-success" type="button" onclick="run(ward_config, patient_config, simulation_config)">Run simulation</button>
+          <button class="btn btn-success" type="button" onclick="run(ward_config, patient_config, simulation_config, virtual_wards)">Run simulation</button>
+            <button id="change-hospital-btn" class="btn btn-primary" data-toggle="modal" data-target="#change-hospital-modal">Change hospital</button>
+  <button id="download-btn" class="btn btn-primary" onclick="download_current_config()" >Download config</button>
         </div>
       </div>
       </div>
@@ -306,6 +310,43 @@
 </div>
 <div class="spacer"></div>
 
+
+<!-- Modal -->
+<div class="modal fade" id="change-hospital-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myModalLabel">Change to a different hospital</h4>
+      </div>
+      <div class="modal-body">
+
+<!--       <p>Select one of the preset hospitals:</p>
+      <p>
+      <select id="select-hospital-preset">
+        <option value="small">Small</option>
+        <option value="medium">Medium</option>
+        <option value="large">Large</option>
+      </select>
+      <button type="button" id="file-upload-btn" class="btn btn-primary" onclick="change_preset()">Change preset</button>
+      <p>
+
+      <p>
+        <b>or</b>
+      </p>
+       -->
+      <p>
+        Upload a custom configuration file:<input type="file" id="file_upload">
+        <output id="file_list"></output>
+       <button type="button" id="file-upload-btn" class="btn btn-primary" onclick="upload_config()">Upload</button>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
   <script type="text/javascript" src="src/lib/jquery-3.1.1.min.js"></script>
