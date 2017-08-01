@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui"> -->
+
+  <meta name="description" content="Hospital flow simulator" />
+
+  <link href="css/style.css" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="src/lib/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+  <title>Hospital flow simulation</title>
+
+  <script type="text/javascript" src="src/lib/underscore-min.js"></script>
+ 
+ 
+
+      <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+  
+<body>
+<center><h1>Patient Flow Simulator <small>Documentation</small></h1></center>
+<center><h2><small><a href="./index.html">Simulator</a>  |  <a href="./docs.html">Help</a>  |  <a href="./developer.html">Developer</a>  |  <a href="./about.html">About</a></small></h2></center>
+
+  <script type="text/javascript" src="src/lib/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="src/lib/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="src/lib/highlight/styles/default.css">
+<script src="src/lib/highlight/highlight.pack.js"></script>
+
+
+  <hr />
+
+  <div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+    <h3>Configuration files</h3>
+    <p>Every aspect of the simulation can be customised. This is handled through JSON formatted configuration files. These files must contain three elements:
+    <ul>
+      <li>Patient settings <ul>
+        <li>Transfer probability graph</li>
+        <li>Resource requirements per ward</li>
+        <li>Stay duration requirements per ward</li>
+        <li>Arrival rate and arrival ward</li>
+      </ul> </li>
+      <li>Ward settings<ul>
+        <li>Queue policy</li>
+        <li>Resource distribution policy</li>
+        <li>Resources and capacity</li>
+        <li>Overflow policy</li>
+        <li>Colour used for network and plots</li>
+      </ul></li>
+      <li>Simulation settings <ul>
+        <li>Number of steps</li>
+        <li>Target A+E waiting time</li>
+      </ul></li>
+    </ul>
+    </p>
+    </div>
+  </div>
+<hr />
+  <div class="row">
+  <div class="col-md-6">
+    <h3>Basic file structure</h3>
+    <p>Configuration files are JSON objects. The basic structure is shown below, the internal structure of each section will be described separately. There are no optional elements.</p>
+    </div>
+    <div class="col-md-6">
+    <h3>Sample code</h3>
+<pre><code>{
+  "patient_config" : { },
+
+  "ward_config" : [ {}, {}, ...], //one element per ward
+
+  "simulation_config" : { ... }
+}
+</code></pre>
+    </div>
+  </div>
+<hr />
+  <div class="row">
+  <div class="col-md-6">
+<h3>Patient config</h3>
+<h4>Details</h4>
+<p>The <code>transfer_probability</code> object describes the edges in a graph were nodes are wards and edges are patient transfers. The weight of each edge is the probability that a patient in the source ward will be transferred to the target ward. It must ultimately be possible for all patients to reach the (virtual) Exit ward. </p>
+
+<p><code>resource_limits</code> and <code>wait_limits</code> have the same structure. They provide the parameters for poisson distributions (the lambda) used to generate the resource need and stay duration required for each patient in each ward. The min and max parameters clamp the possible generated values. Importantly, the settings for the Pool and Exit wards <b>must not be changed</b>. The Exit ward is not described in the <code>wait_limits</code> object because the limit must be set to Javascript <code>Infinity</code>, which is not possible in JSON.</p>
+
+<p>The <code>batch_arrival_*</code> properties parameterise the poisson distrubution controlling the arrival rate at A+E. Per simulation step, this distribution is used to determine the number of new patients arriving.</p>
+
+<h4>User editable</h4>
+
+<p><code>transfer_probability</code>, <code>resource_limits</code>, <code>wait_limits</code> and <code>initial_ward</code> are entirely determined by the configuration file and cannot be changed by users. For all other settings, the configuration file sets the default but users are not restricted to your settings.</p>
+
+  </div>
+  <div class="col-md-6">
+  <h3>Sample code</h3>
+<pre><code>"patient_config" : {
+  "transfer_probability" : {
+      "Emergency":[
+        {"name":"Observation","weight":0.8},
+        {"name":"Medical","weight":0.15},
+        {"name":"Surgery","weight":0.05}
+        ],
+      "Observation":[
+        {"name":"Medical","weight":0.3},
+        {"name":"Exit","weight":0.7}
+        ],
+      "Medical":[
+        {"name":"Surgery","weight":0.2},
+        {"name":"Exit","weight":0.8}
+        ],
+      "Surgery":[
+        {"name":"Recovery","weight":1}
+        ],
+      "Recovery":[
+        {"name":"Exit","weight":1}
+        ]
+      },
+  "resource_limits" : {
+      "Emergency" : {
+        "min" : 1,
+        "max" : 10,
+        "lambda" : 10
+        },
+      ...
+      "Exit" : {"min":1,"max":1}, //do not change
+      "Pool":{"min":1,"max":1} //do not change
+      },
+  "wait_limits" : {
+    "Emergency" : {
+      "min" : 1,
+      "max" : 10,
+      "lambda" : 10
+      },
+      ...
+      "Pool":{"min":1,"max":1} //do not change
+  },
+  "max_transfers" : 10, //to prevent infinitely long visits
+  "max_patients" : 200, //limit number of patients that can be generated
+  "batch_arrival_min" : 0,
+  "batch_arrival_max" : 2,
+  "batch_arrival_lambda" : 5,
+  "initial_ward" : "Emergency" //patients will always arrive here from the Pool
+  }
+</code></pre>
+  </div>
+  </div>
+
+<hr />
+
+  <div class="row">
+  <div class="col-md-6">
+  <h3>Ward config</h3>
+<h4>Details</h4>
+<p><code>ward_config</code> is a list of objects, with one object per ward (except Exit and Pool which cannot be configured). <code>resource_distribution</code> can be one of "divide_evenly", "highest_first" or "lowest_first". <code>accept_overflow</code> can either be "always" or "never".</p>
+
+<p><code>queue_policy</code> must be the name of a queue object. The default options are "MaxPQ" (highest need first), "MinPQ" (lowest need first) and "SimpleQueue" (first come, first served). Custom queue types that implement different policies can be added, see below.</p>
+
+<h4>User editable</h4>
+<p>All settings apart from <code>fill_colour</code> can be changed by the user, all you can set is the default.</p>
+
+  </div>
+  <div class="col-md-6">
+  <h3>Sample code</h3>
+<pre><code>"ward_config" : [
+  {
+    "name" : "Emergency",
+    "capacity" : 50,
+    "resources" : 50,
+    "resource_distribution" : "divide_evenly",
+    "accept_overflow" : "never",
+    "fill_colour" : "#F6D8AE",
+    "queue_policy" : "MaxPQ"
+  },
+  ...
+]
+</code></pre>
+  </div>
+  </div>
+<hr />
+    <div class="row">
+  <div class="col-md-6">
+  <h3>Adding custom queues</h3>
+<p><code>queue_policy</code> must be the name of a queue object that conforms to a simple API. To extend the simulator with an additional queue type, the new queue class must at least provide the methods shown. Queue objects are used extensively in the simulation and so new queues should be as performant as possible to avoid slowing down the simulation.</p>
+  </div>
+  <div class="col-md-6">
+  <h3>Sample code</h3>
+<pre><code>function MyNewQueue(max_size){
+  this.max_size = max_size //this is currently always set to Infinity
+
+  this.add = function(el){
+    //add a Patient object to the queue
+    //do not accept a duplicate patient
+  }
+
+  this.next = function(){
+    //return the Patient object at the front of the queue
+  }
+
+  this.length = function(){
+    //return the current length of the queue
+  }
+}
+</code></pre>
+  </div>
+  </div>
+
+
+
+<hr />
+
+
+  <div class="row">
+  <div class="col-md-6">
+<h3>Simulation config</h3>
+
+<h4>Details</h4>
+<code>emergency_wait_target</code> is the maximum length of time patients should have to wait in A+E before being admitted to another ward, definied as the number of simulation steps. 
+
+<h4>User editable</h4>
+<p>All options can be changed be the user, the configuration file only sets the default.</p>
+  </div>
+  <div class="col-md-6">
+  <h3>Sample code</h3>
+<pre><code>"simulation_config" : {
+  "steps" : 100, //steps until simulation ends
+  "emergency_wait_target" : 15
+}
+</code></pre>
+  </div>
+  </div>
+
+
+
+
+
+  </div> <!-- end container-fluid -->
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>
