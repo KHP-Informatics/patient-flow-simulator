@@ -26,7 +26,7 @@
   
 <body>
 <center><h1>Patient Flow Simulator <small>Documentation</small></h1></center>
-<center><h2><small><a href="./index.html">Simulator</a></small></h2></center>
+<center><h2><small><a href="./index.html">Simulator</a>  |  <a href="./docs.html">Help</a>  |  <a href="./developer.html">Developer</a>  |  <a href="./about.html">About</a></small></h2></center>
 
   <hr />
 
@@ -62,7 +62,11 @@
     </dl>
     <h4>Simulation setup</h4>
     <p>Here you can start the simulation, and also change some parameters that would increase or decrease the pressure on your hospital. By default the settings reproduce a fairly typical month with typically 3 admissions from the Emergency Department per hour. You should not use these settings as a way to "improve" the performance of your hospital.</p>
+
+    <p>The default hospital is designed to be complex enough to be interesting, but not overwhelming in the context of a 30-60 min session. Every aspect of the hospital can be configured and uploaded, including the number of wards and their default settings and the probability of different types of patients arriving. Changing the core hospital configuration is <a href="./developer.html">documented here</a>. Students using the tool are not expected to modify the basic configuration, this is an option for the organisers. However, it may be useful to download your current settings (the "download config" button). This includes all the current options set in the ward management section, so this is a convenient way to save your current settings and return to them later for comparison.</p>
+
     <p>Click the green "Run" button to start the simulation.</p>
+    
     <dl>
       <dt>Simulation steps</dt>
       <dd>Total number of steps. By default, 1 step is equivalent to 1 hour in the hospital so 672 steps is 1 month.</dd>
@@ -86,8 +90,8 @@
 </div>
 </div>
 
-  <script type="text/javascript" src="src/lib/jquery-3.1.1.min.js"></script>
-    <script type="text/javascript" src="src/lib/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="src/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="src/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
 
 
 
