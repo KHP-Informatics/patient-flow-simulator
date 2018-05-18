@@ -5,15 +5,18 @@ function Patient(config){
 	this.required.wards = []//array where index 0 is A&E, ... , discharge
 	this.required.waits = []
 	this.required.resources = []
+	this.required.attention = []
 	for(var k in config){
 		this.required[k] = config[k]
 	}
+	this.required.attention = this.required.resources // temporarily use resources as attention, later generate as wait and resource
 	this.required.progress = -1
 	this.required.in_required_ward = false
 	this.observed = {}
 	this.observed.wards = []
 	this.observed.entry_times = []
 	this.observed.resources = []
+	this.observed.attention = []
 	this.last_move_time = 0
 	this.can_move = true
 	this.target = this.required.wards[0]
@@ -26,6 +29,7 @@ function Patient(config){
 		this.observed.wards.push(destination.name)
 		this.observed.entry_times.push(time)
 		this.observed.resources.push(0)
+		this.observed.attention.push(0)
 		this.current_ward = destination
 
 		//update timestamp
@@ -51,10 +55,22 @@ function Patient(config){
 		this.observed.resources[this.observed.resources.length - 1] += amount
 	}
 
+	this.consume = function(what, amount){
+		this.observed[what][this.observed[what].length - 1] += amount
+	}
+
 	this.resource_need_remaining = function(){
 		var amount = 0;
 		if(this.required.in_required_ward){
 			amount = this.required.resources[this.required.progress] - this.observed.resources[this.observed.resources.length-1]
+		} 
+		return amount;
+	}
+
+	this.need_remaining = function(what){
+		var amount = 0;
+		if(this.required.in_required_ward){
+			amount = this.required[what][this.required.progress] - this.observed[what][this.observed[what].length-1]
 		} 
 		return amount;
 	}
@@ -72,7 +88,9 @@ function Patient(config){
 			var delta_wait = time - this.last_move_time
 			var wait_need_met = delta_wait >= this.required.waits[this.required.progress]
 			var resource_needs_met = this.required.resources[this.required.progress] - this.observed.resources[this.observed.resources.length-1] <= 0
-			if(wait_need_met & resource_needs_met){
+			var attn_remaining = this.need_remaining('attention')
+			var attentionn_needs_met = attn_remaining <= 0
+			if(wait_need_met && resource_needs_met && attentionn_needs_met){
 				this.can_move = true
 			} else {
 				this.can_move = false
