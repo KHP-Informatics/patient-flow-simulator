@@ -136,7 +136,8 @@ function run(ward_config, patient_config, simulation_config, virtual_wards){
 
 		//now all patients are in place, consume resources to treat them
 		ward_names.forEach(function(el){
-			wards[el].spend_resources()
+			wards[el].spend('resources')
+			wards[el].spend('attention')
 		})
 		
 	} // end of simulation loop
