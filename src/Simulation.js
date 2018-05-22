@@ -192,6 +192,7 @@ function Ward(config){
 	config must define
 		capacity = (Int) max number of patients
 		resources = (any number) resources available per simulation step
+		attention = (any number) staff available per simulation step
 		name = (string) name of ward
 		resource_distribution = "divide_evenly",
 		accept_overflow = "always" or "never"
@@ -200,12 +201,15 @@ function Ward(config){
 	//defaults for values that should be in config
 	this.capacity = 1 
 	this.resources = 1
+	this.attention = 1
 	this.name = ""
 	this.resource_distribution = "divide_evenly"
 	this.accept_overflow = "always"
 	for(var k in config){
 		this[k] = config[k]
 	}
+	//delete this once set in GUI and config file
+	this.attention = this.resources
 
 	//internal values not set by config
 	// no limit on number of patient who can wait elsewhere to get in
@@ -261,16 +265,22 @@ function Ward(config){
 		this.admitted.remove(patient)
 		this.at_capacity = false
 	}
-	this.spend_resources = function(){
-		if(this.resource_distribution == "divide_evenly"){
-			var amount_per_patient = this.resources/this.admitted.length
+
+
+	//spend any resource
+	this.spend = function(what, amount){
+		var policy = this.resource_distribution
+		var available = this[what]
+
+		if(policy == "divide_evenly"){
+			var amount_per_patient = available/this.admitted.length
 			this.admitted.forEach(function(el){
-				el.consume_resources(amount_per_patient)
+				el.consume(what, amount_per_patient)
 			})
-		} else if(this.resource_distribution == "lowest_first"){
+		} else if(policy == "lowest_first"){
 			this.admitted.sort(function(a, b) {
-				var remaining_A = a.resource_need_remaining(); 
-				var remaining_B = b.resource_need_remaining();
+				var remaining_A = a.need_remaining(what); 
+				var remaining_B = b.need_remaining(what);
 				if (remaining_A < remaining_B) {
 					return -1;
 				}
@@ -281,18 +291,18 @@ function Ward(config){
 				// names must be equal
 				return 0;
 			});	
-			var available = this.resources
+			
 			this.admitted.forEach(function(el){
-				var p_need = el.resource_need_remaining()
+				var p_need = el.need_remaining(what)
 				var p_gets = Math.min(available, p_need)
 				available -= p_gets
 				el.consume_resources(p_gets)
 			})
 
-		} else if(this.resource_distribution == "highest_first"){
+		} else if(policy == "highest_first"){
 			this.admitted.sort(function(a, b) {
-				var remaining_A = a.resource_need_remaining(); 
-				var remaining_B = b.resource_need_remaining();
+				var remaining_A = a.need_remaining(what); 
+				var remaining_B = b.need_remaining(what);
 				if (remaining_A > remaining_B) {
 					return -1;
 				}
@@ -303,9 +313,9 @@ function Ward(config){
 				// names must be equal
 				return 0;
 			});	
-			var available = this.resources
+
 			this.admitted.forEach(function(el){
-				var p_need = el.resource_need_remaining()
+				var p_need = el.need_remaining(what)
 				var p_gets = Math.min(available, p_need)
 				available -= p_gets
 				el.consume_resources(p_gets)
