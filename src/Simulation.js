@@ -208,8 +208,6 @@ function Ward(config){
 	for(var k in config){
 		this[k] = config[k]
 	}
-	//delete this once set in GUI and config file
-	this.attention = this.resources
 
 	//internal values not set by config
 	// no limit on number of patient who can wait elsewhere to get in

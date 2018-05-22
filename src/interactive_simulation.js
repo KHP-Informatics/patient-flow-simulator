@@ -278,6 +278,7 @@ function show_config(ward){
 	$('#selected-ward-name').text('Editing ' + ward)
     $("#ward-capacity").val(selected_ward_config.capacity)
     $("#ward-resources").val(selected_ward_config.resources)
+    $("#ward-attention").val(selected_ward_config.attention)
     $('#ward-resource-policy').val(selected_ward_config.resource_distribution);
     $('#ward-overflow-policy').val(selected_ward_config.accept_overflow);
     $('#ward-queue-policy').val(selected_ward_config.queue_policy);
@@ -299,6 +300,7 @@ function save_ward_changes(){
 	//update that ward
 	selected_ward_config.capacity = parseFloat($("#ward-capacity").val())
     selected_ward_config.resources = parseFloat($("#ward-resources").val())
+    selected_ward_config.attention = parseFloat($("#ward-attention").val())
     selected_ward_config.resource_distribution = $('#ward-resource-policy').val()
     selected_ward_config.accept_overflow = $('#ward-overflow-policy').val()
     selected_ward_config.queue_policy = $('#ward-queue-policy').val()
