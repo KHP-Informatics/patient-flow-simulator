@@ -1,6 +1,6 @@
 //plotting simulation results
 
-function plotSimulationResults(data, container, title, xlab, ylab, width, height){
+function plotSimulationResults(data, subset, container, title, xlab, ylab, width, height, proportional){
 	var plot_name = container + '-plot'
 	$('#' + plot_name).remove(); 
  	$('#' + container).append('<canvas id="'+plot_name+'"><canvas>');
@@ -45,10 +45,30 @@ function plotSimulationResults(data, container, title, xlab, ylab, width, height
 		fills[el.name] = el.fill_colour
 	})
 
+	var ward_names = Object.keys(data[subset]) 
+	var cfg = {} //convert config from list to dict
+	data.config.forEach(function(el){
+		cfg[el.name] = el
+	})
+	var plot_data = {}
+	ward_names.forEach(function(el){
+		if(el != "Pool" & el != "Exit"){
+			plot_data[el] = []
+			if(proportional){
+				for (var i = 0; i < data[subset][el].length; i++) {
+					var dt = data[subset][el][i] 
+					dt.y = data[subset][el][i].y / cfg[el].capacity 
+					plot_data[el].push(dt)
+				}
+			} else {
+				plot_data[el] = data[subset][el]
+			}
+		}
+	})
 
 	//push each dataset
 	//remember to add chartjs specific details
-	ward_names = Object.keys(data.results) 
+	
 	ward_names.forEach(function(el){
 		if(el != "Pool" & el != "Exit"){
 			line_data = {
@@ -58,7 +78,7 @@ function plotSimulationResults(data, container, title, xlab, ylab, width, height
 	            borderColor: fills[el],
 	            backgroundColor: fills[el],
 	            //steppedLine: true, //alternative to straigh lines between points, technically more correct
-	            data: data.results[el]
+	            data: plot_data[el]
 	        }
 			scatter_config.data.datasets.push(line_data)
 		}
@@ -92,11 +112,29 @@ function plotWaitingTimeFreq(patients, ward, container, width, height, text_outp
 	var result = {} 
 	result['results'] = {"frequency": points}
 	result['config'] = [{name:"frequency", fill_colour: "#ccc"}]
-	plotSimulationResults(result, container, "Waiting time distribution: " + ward, "waiting time", "count", width, height)
+	plotSimulationResults(result, 'results', container, "Waiting time distribution: " + ward, "waiting time", "count", width, height)
 	var mean = total/n
 	$('#' + text_output).text(mean.toFixed(2))
 }
 
+//histogram of delays in required wards
+function plotDelayTimeFreq(patients, ward, container, width, height, text_output){
+	var counts = delayCounts(patients, ward)
+	points = []
+	var total = 0
+	var n = 0
+	for (var i = 0; i < counts['counts'].length; i++) {
+		points.push({'x': counts['values'][i], 'y': counts['counts'][i]})
+		total += counts['values'][i] * counts['counts'][i]
+		n += counts['counts'][i]
+	}
+	var result = {} 
+	result['results'] = {"frequency": points}
+	result['config'] = [{name:"frequency", fill_colour: "#ccc"}]
+	plotSimulationResults(result, 'results', container, "Delay distribution: " + ward, "delay time", "count", width, height)
+	var mean = total/n
+	$('#' + text_output).text(mean.toFixed(2))
+}
 
 function plotPathLengthDistribution(patients, container, width, height, total_paths_output, top_paths_output, top_paths_limit){
 	var paths = {}// used to count unique sequences and occurrences of each sequence
@@ -123,7 +161,7 @@ function plotPathLengthDistribution(patients, container, width, height, total_pa
 	var result = {} 
 	result['results'] = {"frequency": points}
 	result['config'] = [{name:"frequency", fill_colour: "#ccc"}]
-	plotSimulationResults(result, container, "Path length distribution", "Path length (wards)", "Patients", width, height)
+	plotSimulationResults(result, 'results', container, "Path length distribution", "Path length (wards)", "Patients", width, height)
 	console.log(result)
 	$('#' + total_paths_output).text(Object.keys(paths).length)
 

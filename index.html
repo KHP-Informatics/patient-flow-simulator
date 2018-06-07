@@ -85,6 +85,7 @@
             <select class="form-control" id="ward-resource-policy">
               <option value="divide_evenly">Equal</option>
               <option value="highest_first">Highest first</option>
+              <option value="highest_first">Biased highest first</option>
               <option value="lowest_first">Lowest first</option>
             </select>
 
@@ -127,7 +128,13 @@
 
             <label for="simulation-emergency-target">Emergency wait target</label>
             <input type="text" min="1" class="form-control" id="simulation-emergency-target">
+            
+            <input class="form-check-input" type="radio" name="resume-mode-radios" id="reset-sim-toggle" value="reset">
+            <label class="form-check-label" for="reset-sim-toggle">Clean slate</label>
+            <input class="form-check-input" type="radio" name="resume-mode-radios" id="continue-sim-toggle" value="resume" checked>
+            <label class="form-check-label" for="continue-sim-toggle">Resume</label>
             <br>
+
           <button class="btn btn-success" type="button" onclick="run(ward_config, patient_config, simulation_config, virtual_wards)">Run simulation</button>
             <button id="change-hospital-btn" class="btn btn-primary" data-toggle="modal" data-target="#change-hospital-modal">Change hospital</button>
   <button id="download-btn" class="btn btn-primary" onclick="download_current_config()" >Download config</button>
@@ -151,6 +158,8 @@
     <li role="presentation"><a href="#occupancy-tab" data-toggle="tab">Occupancy</a></li>
     <li role="presentation"><a href="#top-paths-tab" data-toggle="tab">Top paths</a></li>
     <li role="presentation"><a href="#path-distribution-tab" data-toggle="tab">Path length</a></li>
+    <li role="presentation"><a href="#queue-tab" data-toggle="tab">Queue length*</a></li>
+    <li role="presentation"><a href="#delay-tab" data-toggle="tab">Delays*</a></li>
   </ul>
   </div> 
 
@@ -175,8 +184,13 @@
 
         <!-- List group -->
         <ul class="list-group">
-          <li class="list-group-item">Total resources used: <div class="inline" id="total-resource-use"></div></li>
-          <li class="list-group-item">Total bed capacity: <div class="inline" id="total-capacity"></div></li>
+          <li class="list-group-item">Total resources used: <div class="inline" id="total-resource-use"></div>
+            , cost £<div class="inline" id="total-resource-cost"></div></li>
+          <li class="list-group-item">Total bed capacity: <div class="inline" id="total-capacity"></div>
+            , cost £<div class="inline" id="total-capacity-cost"></div></li>
+          <li class="list-group-item">Total staff: <div class="inline" id="total-staff"></div>
+            , cost £<div class="inline" id="total-staff-cost"></div></li>
+          <li class="list-group-item">Total operating cost: £<div class="inline" id="total-cost"></div></li>
         </ul>
       </div>
 
@@ -247,9 +261,12 @@
               <h3 class="panel-title">Emergency performance</h3>
             </div>
             <div class="panel-body">
-              Analyse the distribution of Emergency Department waiting time. 
+              Analyse the distribution of length of stay in any ward, including emergency department waiting time.
             </div>
           </div>
+
+          <select id="wait-plot-list"></select>
+          <button class="btn btn-default" onclick="select_wait_plot_ward()">Select</button>
         
             <div class="plotcontainer" id="waiting">
               <canvas id="waiting-plot" class="plot"></canvas>
@@ -310,7 +327,39 @@
       </div>
     </div>
 
-  </div>
+    <div role="tabpanel" class="tab-pane" id="queue-tab">
+          <div class="panel panel-primary panel-help">
+            <div class="panel-heading">
+              <h3 class="panel-title">Ward queue length</h3>
+            </div>
+            <div class="panel-body">
+              Analyse the number of patients waiting for admission to each ward over time. Click the legend to show/hide wards. 
+            </div>
+          </div>
+
+      <div class="plotcontainer" id="queues">
+      <canvas id="queues-plot" class="plot"></canvas> 
+      <!-- canvas element will be deleted in JS and created with this ID -->
+      </div>
+    </div>
+
+    <div role="tabpanel" class="tab-pane" id="delay-tab">
+          <div class="panel panel-primary panel-help">
+            <div class="panel-heading">
+              <h3 class="panel-title">Causes of delay</h3>
+            </div>
+            <div class="panel-body">
+              Delays that arise within wards may be due to shortage of staff or resources.
+            </div>
+          </div>
+
+      <div id="delay-table-container">
+        <table class="table table-bordered" id="delay-table"></table>
+      </div>
+    </div>
+
+
+  </div> <!-- end of tab content -->
 
 </div>
 <div class="spacer"></div>

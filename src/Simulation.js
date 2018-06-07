@@ -9,7 +9,6 @@ function Patient(config){
 	for(var k in config){
 		this.required[k] = config[k]
 	}
-	this.required.attention = this.required.resources // temporarily use resources as attention, later generate as wait and resource
 	this.required.progress = -1
 	this.required.in_required_ward = false
 	this.observed = {}
@@ -17,12 +16,14 @@ function Patient(config){
 	this.observed.entry_times = []
 	this.observed.resources = []
 	this.observed.attention = []
+	this.when_wait_met = [] //the other remaining needs of the patient when their wait limit was met
 	this.last_move_time = 0
 	this.can_move = true
 	this.target = this.required.wards[0]
 	this.id = ""
 	this.current_ward = ""
 	this.target_resource_required = 0 //what are the resource needs for this patient in the next ward they have to visit. Used for priority queues.
+	this.wait_met_logged = false //flag to ensure other needs are only logged once when wait met
 
 	//move to a new ward
 	this.move = function(destination, time){
@@ -37,6 +38,9 @@ function Patient(config){
 
 		//reset ability to move
 		this.can_move = false
+
+		//reset flag for logging remaining needs
+		this.wait_met_logged = false
 
 		//has the patient moved into a required ward
 		if(destination.name == this.required.wards[this.required.progress + 1]){
@@ -87,14 +91,40 @@ function Patient(config){
 			//the last element is always the current ward
 			var delta_wait = time - this.last_move_time
 			var wait_need_met = delta_wait >= this.required.waits[this.required.progress]
-			var resource_needs_met = this.required.resources[this.required.progress] - this.observed.resources[this.observed.resources.length-1] <= 0
+			var resource_need_remaining = this.required.resources[this.required.progress] - this.observed.resources[this.observed.resources.length-1]
+			var resource_needs_met = resource_need_remaining <= 0
 			var attn_remaining = this.need_remaining('attention')
-			var attentionn_needs_met = attn_remaining <= 0
-			if(wait_need_met && resource_needs_met && attentionn_needs_met){
+			var attention_needs_met = attn_remaining <= 0
+			// if(this.required.in_required_ward){
+			// 	console.log("id:", this.id,"attention met:", attention_needs_met, "wait met:", wait_need_met, "resource met", resource_needs_met)
+			// }
+
+			//state of other needs the first time wait need is met
+			if(wait_need_met && !this.wait_met_logged){
+				var other_needs = {}
+				other_needs['current_ward'] = this.current_ward.name
+				other_needs['target_ward'] = this.target
+				other_needs['attention'] = attn_remaining
+				other_needs['resources'] = resource_need_remaining
+				other_needs['time_wait_met'] = time
+				//are other needs met at the time the wait need is met
+				//i.e. are pt moving as quickly as possible
+				//ideally wouldn't separately calculate this here but avoids complicating can_move block
+				other_needs['can_move'] = (attn_remaining <=0 && resource_need_remaining <= 0)
+				this.when_wait_met.push(other_needs)
+				this.wait_met_logged = true
+			}
+
+			if(wait_need_met && resource_needs_met && attention_needs_met){
 				this.can_move = true
+				var idx = this.when_wait_met.length - 1
+				this.when_wait_met[idx]['time_others_met'] = time
+				this.when_wait_met[idx]['delay'] = time - this.when_wait_met[idx]['time_wait_met']
 			} else {
 				this.can_move = false
 			}
+
+			
 		} else {
 			//can always move if not in a required ward
 			this.can_move = true
@@ -211,17 +241,34 @@ function Ward(config){
 
 	//internal values not set by config
 	// no limit on number of patient who can wait elsewhere to get in
-	if(this.queue_policy == "MaxPQ"){
+	this.create_queue = function(){
+		if(this.queue_policy == "MaxPQ"){
 		this.entry_queue = new MaxPQ(Infinity)
-	} else if(this.queue_policy == "MinPQ"){
-		this.entry_queue = new MinPQ(Infinity)
-	} else {
-		this.entry_queue = new SimpleQueue(Infinity)
+		} else if(this.queue_policy == "MinPQ"){
+			this.entry_queue = new MinPQ(Infinity)
+		} else {
+			this.entry_queue = new SimpleQueue(Infinity)
+		}
 	}
+
+	this.create_queue()
 	this.admitted = []
 	this.at_capacity = false
 
 	//functions
+	this.update_config = function(config){
+		for(var k in config){
+			this[k] = config[k]
+		}
+		var old_queue = this.entry_queue
+		this.create_queue()
+		//put any patients back on the queue
+		//correct order will be established by the new queue
+		while(old_queue.length() > 0){
+			this.add_to_queue(old_queue.next())
+		}
+	}
+
 	this.admit = function(patient, here, time){
 		if(this.admitted.length < this.capacity){
 			patient.move(here, time)
@@ -239,7 +286,7 @@ function Ward(config){
 		while(!this.at_capacity & this.entry_queue.length() > 0){
 			moved_count++ //need to do this before calling admit because admit changes at_capacity
 			var p = this.entry_queue.next()
-			console.log("admit from queue: moving patient id",p.id,"from",p.current_ward.name,"to",this.name)
+			//console.log("admit from queue: moving patient id",p.id,"from",p.current_ward.name,"to",this.name)
 			p.current_ward.discharge(p)
 			this.admit(p, here, time)
 		}
@@ -251,7 +298,7 @@ function Ward(config){
 	//this will create errors if patient is actually in the input_queue
 	this.admit_from = function(patient, here, time){
 		if(this.admitted.length < this.capacity){
-			console.log("admit from ward: moving patient id",patient.id,"from",patient.current_ward.name,"to",this.name)
+			//console.log("admit from ward: moving patient id",patient.id,"from",patient.current_ward.name,"to",this.name)
 			patient.current_ward.discharge(patient)
 			this.admit(patient, here, time)
 			return true
@@ -294,10 +341,10 @@ function Ward(config){
 				var p_need = el.need_remaining(what)
 				var p_gets = Math.min(available, p_need)
 				available -= p_gets
-				el.consume_resources(p_gets)
+				el.consume(what, p_gets)
 			})
 
-		} else if(policy == "highest_first"){
+		} else if(policy == "highest_first" || policy == "biased_highest_first"){
 			this.admitted.sort(function(a, b) {
 				var remaining_A = a.need_remaining(what); 
 				var remaining_B = b.need_remaining(what);
@@ -311,14 +358,35 @@ function Ward(config){
 				// names must be equal
 				return 0;
 			});	
+			if(policy == "highest_first"){
+				//strictly highest need first, many patients likely to get nothing
+				//only really useful as an example, not realistic
+				this.admitted.forEach(function(el){
+					var p_need = el.need_remaining(what)
+					var p_gets = Math.min(available, p_need)
+					available -= p_gets
+					el.consume(what, p_gets)
+				})
+			} else if(policy == "biased_highest_first"){
+				//biased highest-first
+				//every patients gets a baseline amount, plus extra based on need
+				var base_prop = 0.5 // proportion of available resource that is always shared between all pt
+				var base_amount = (available * base_prop) / this.admitted.length
+				var available_biased = (available * base_prop)
+				var initial_value = 0
+				var total_need = this.admitted.reduce(function(accumulator, current_pt) {
+				  return accumulator + current_pt.need_remaining(what);
+				}, initial_value);
 
-			this.admitted.forEach(function(el){
-				var p_need = el.need_remaining(what)
-				var p_gets = Math.min(available, p_need)
-				available -= p_gets
-				el.consume_resources(p_gets)
-			})
-		}
+				this.admitted.forEach(function(el){
+					var p_need = el.need_remaining(what)
+					var p_gets = available_biased * (p_need / total_need)
+					p_gets += base_amount
+					el.consume(what, p_gets)
+				})
+			}
+			
+		} 
 	}
 	this.will_accept_overflow = function(){
 		if(this.accept_overflow == "always"){
@@ -375,13 +443,16 @@ function PatientGenerator(config){
 		var current_wait = this.generate_wait(current_ward)
 		var wait_sequence = [current_wait] // should be generated
 		var current_resource = this.generate_resource(current_ward)
+		var current_attention = this.generate_attention(current_ward)
 		var resource_sequence = [current_resource] // should be generated
+		var attention_sequence = [current_resource] // should be generated
 		while(n_transfers < this.config.max_transfers & current_ward != "Exit"){
 			current_ward = this.get_next_ward(current_ward)
 			ward_sequence.push(current_ward)
 			//these should be generated
 			wait_sequence.push(this.generate_wait(current_ward))
 			resource_sequence.push(this.generate_resource(current_ward))
+			attention_sequence.push(this.generate_attention(current_ward))
 			n_transfers += 1
 		}
 		//if we exited because we reached the max number of transfers, add exit on the end
@@ -391,8 +462,9 @@ function PatientGenerator(config){
 			//these should be generated
 			wait_sequence.push(this.generate_wait(current_ward))
 			resource_sequence.push(this.generate_resource(current_ward))
+			attention_sequence.push(this.generate_attention(current_ward))
 		}
-		return {wards: ward_sequence, waits: wait_sequence, resources: resource_sequence}
+		return {wards: ward_sequence, waits: wait_sequence, resources: resource_sequence, attention: attention_sequence}
 	}
 
 	this.get_next_ward = function(ward){
@@ -405,11 +477,27 @@ function PatientGenerator(config){
 				break
 			}
 		}
+		if(next == ""){
+			console.log("no next ward found from ", ward)
+			console.log("poss_targets", poss_targets)
+			console.log("rn", rn, 'sum', sum)
+		}
 		return next
 	}
 
 	this.generate_resource = function(ward, type){
 		var limits = this.config.resource_limits[ward]
+		var r = 0
+		if(ward == "Pool" || ward == "Exit"){
+			r = getRandomInt(limits.min, limits.max)
+		} else {
+			r = poisson(limits.lambda)
+		}
+		return r;
+	}
+
+	this.generate_attention = function(ward){
+		var limits = this.config.attention_limits[ward]
 		var r = 0
 		if(ward == "Pool" || ward == "Exit"){
 			r = getRandomInt(limits.min, limits.max)
@@ -506,6 +594,22 @@ function visitCounts(patients, ward){
 		}
 	})
 	var counts = arrayCount(all_visit_waits)
+	return counts
+}
+
+//delays are only logged for required wards
+//for all patients ever admitted to ward who were required to be there
+//how long where they delayed relative to the minumum time they had to spend there
+function delayCounts(patients, ward){
+	var all_visit_delays = []
+	patients.forEach(function(el){
+		el.when_wait_met.forEach(function(wwm){
+			if(wwm.current_ward == ward){
+				all_visit_delays.push(wwm.delay)
+			}
+		})
+	})
+	var counts = arrayCount(all_visit_delays)
 	return counts
 }
 

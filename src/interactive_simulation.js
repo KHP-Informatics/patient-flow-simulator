@@ -1,38 +1,76 @@
 // interact with GUI to control simulation
 //wards are defined by ward_config.js
+"use strict";
+window.run_number = 0;
+window.prev_result = {};
+window.performance_history = []
 
 function run(ward_config, patient_config, simulation_config, virtual_wards){
 	save_patient_changes() //get changes to configuration from editor
 	save_simulation_changes()
 	default_simulation_summary()
 	reset_buttons()
-	var wards = {}
-	var ward_names = []
-	ward_config.forEach(function(el){
-		wards[el.name] = new Ward(el)
-		ward_names.push(el.name)
-	})
-	virtual_wards.forEach(function(el){
-		wards[el.name] = new Ward(el)
-		ward_names.push(el.name)
-	})
+	var reset_results = reset_when_run()
+	var start_time = 0
+	if(reset_results || window.run_number == 0){ //always have to reset on first run
+		var wards = {}
+		var ward_names = []
+		ward_config.forEach(function(el){
+			wards[el.name] = new Ward(el)
+			ward_names.push(el.name)
+		})
+		virtual_wards.forEach(function(el){
+			wards[el.name] = new Ward(el)
+			ward_names.push(el.name)
+		})
+
+		var seed_patients = true
+		var patients = []
+		if(seed_patients){
+			var seeded = seed(wards, patient_config, 0.8)
+			wards = seeded['wards']
+			patients = seeded['patients']
+		}
+	} else {
+		//need to add code to update ward config from gui
+		var wards = window.prev_result.wards
+		var ward_names = []
+		var patients = []
+		//collect references to patients who are currently admitted to hospital
+		//put them in the patients list so they can be updated and tracked
+		ward_config.forEach(function(el){
+			ward_names.push(el.name)
+			patients = patients.concat(wards[el.name].admitted)
+			wards[el.name].update_config(el) //make any changes to ward config based on GUI. Admitted patients are kept. 
+		})
+		virtual_wards.forEach(function(el){
+			ward_names.push(el.name)
+		})
+		start_time = window.prev_result.end_time + 1 //needed so times work out for patients still in hospital
+		
+	}
+	//true whether or not the simulation is reset
+	var end_time = start_time + simulation_config.steps
+	
 
 	var patient_generator = new PatientGenerator(patient_config)
-	patients = []
 
-	var simulation_data = {results:{}, config: ward_config, virtual_wards: virtual_wards}
+	var simulation_data = {occupancy:{}, config: ward_config, virtual_wards: virtual_wards}
+	simulation_data['queues'] = {}
 	ward_names.forEach(function(name){
-		simulation_data.results[name] = []
+		simulation_data.occupancy[name] = []
+		simulation_data.queues[name] = []
 	})	
 
-	var patient_count = 0
+	var patient_count = patients.length
 	var transfers_to_free_space = 0
 	var all_patients_created = false
-	for (var time = 0; time < simulation_config.steps; time++) {
+	for (var time = start_time; time < end_time; time++) {
 		console.log("step",time)
 		ward_names.forEach(function(name){
 			//console.log(name, wards[name].admitted.length)
-			simulation_data.results[name].push({'x':time, 'y':wards[name].admitted.length})
+			simulation_data.occupancy[name].push({'x':time, 'y':wards[name].admitted.length})
+			simulation_data.queues[name].push({'x':time, 'y':wards[name].entry_queue.length()})
 		})
 
 		//add a random number of patients to the pool, with random required waiting times
@@ -108,6 +146,8 @@ function run(ward_config, patient_config, simulation_config, virtual_wards){
 				}	
 			}
 		})
+		console.log("wards at capacity with queues: ", ward_freeing_order)
+		console.log("wards with free space: ", wards_with_space)
 		var destination_ward_index = 0 //index in wards_with_space
 		ward_freeing_order.forEach(function(el){
 			//on the target ward, "here" is the ward with the overflow
@@ -118,6 +158,7 @@ function run(ward_config, patient_config, simulation_config, virtual_wards){
 			var to_move = wards[el].admitted.filter(function(p){
 				return p.can_move
 			})
+			console.log(to_move.length, " patients can move from ward ", el)
 			var i = 0
 			while(i < to_move.length & destination_ward_index < wards_with_space.length){
 				console.log("freeing space")
@@ -150,22 +191,32 @@ function run(ward_config, patient_config, simulation_config, virtual_wards){
 	//update all patients with their waiting times
 	calculateWaitingTimes(patients)
 	console.log(simulation_data)
-	var occ_plot = plotSimulationResults(simulation_data, "occupancy", "Ward Occupancy", "Time", "Number of patients", 600, 300)
+	var occ_plot = plotSimulationResults(simulation_data, 'occupancy', "occupancy", "Ward Occupancy", "Time", "Number of patients", 600, 300, true)
 
 
 	//plot waiting times
 	//plotWaitingTimeCumulative(patients, "A&E", "waiting", 600, 300)
+	var select = document.getElementById("wait-plot-list");
+	select.value = "Emergency" //reset dropdown in case it was changed since last run
 	var wait_plot = plotWaitingTimeFreq(patients, "Emergency", "waiting", 600, 300,"mean-wait-time")
 
 	var wait_target = showEmergencyWaitVsTarget(patients, simulation_config.emergency_wait_target, "patients-on-target")
 
 	//generate graph
-	buildTransferGraph(patients, wards, 'cy')
+	buildTransferGraph(patients, wards, 'cy', true)
 
 	//plot path lengths
 	plotPathLengthDistribution(patients, "path-length", 600, 300, "total-unique-paths", "top-paths-list", 5)
 
-	return {'simulation_data': simulation_data, 'patients': patients}
+
+	//queue length
+	var q_plot = plotSimulationResults(simulation_data, "queues", "queues", "Queue length", "Time", "Number of patients", 600, 300, false)
+	var delay_tbl = delay_table(patients)
+
+	var output_obj = {'simulation_data': simulation_data, 'patients': patients, 'wards':wards, 'end_time': time}
+	window.prev_result = output_obj
+	window.run_number += 1
+	return output_obj
 }
 
 
@@ -210,22 +261,39 @@ function init_user_interface(patient_config, ward_config, graph_container){
 		cy.fit()
 	})
 
+	//waiting time plot toggle
+	build_wait_time_dropdown()
+
 }
 
 function show_resource_summary(){
 	var total_resources = 0
 	var total_capacity = 0
+	var total_staff = 0
 	ward_config.forEach(function(el){
 		if(el.name != "Exit" & el.name != "Pool"){
 			total_resources += el.resources
 			total_capacity += el.capacity
+			total_staff += el.attention
 		}
 	})
 
+	//costs
+	var resource_cost = simulation_config.resource_cost * total_resources
+	var staff_cost = simulation_config.staff_cost * total_staff
+	var capacity_cost = simulation_config.bed_cost * total_capacity
+
 	//resource used
 	$('#total-resource-use').text(total_resources)
+	$('#total-resource-cost').text(resource_cost)
 	//capacity
 	$('#total-capacity').text(total_capacity)
+	$('#total-capacity-cost').text(capacity_cost)
+	//staff
+	$('#total-staff').text(total_staff)
+	$('#total-staff-cost').text(staff_cost)
+	//overall cost
+	$('#total-cost').text(resource_cost + staff_cost + capacity_cost)
 }
 
 function show_simulation_summary(patients){
@@ -237,9 +305,9 @@ function show_simulation_summary(patients){
 	var remaining = 0;
 	var transfers = 0;
 	patients.forEach(function(el){
-		transfers += el.observed.wards.length - 2
 		if(el.observed.wards.length >=2){
 			admitted += 1
+			transfers += el.observed.wards.length - 2 //only want to count transfers for patients who were admitted
 		}
 		if(el.observed.wards[el.observed.wards.length - 1] == "Exit"){
 			discharged += 1
@@ -386,4 +454,118 @@ function download_current_config(){
 	var config_text = JSON.stringify(config)
 	var blob = new Blob([config_text], {type: "text/plain;charset=utf-8"});
 	saveAs(blob, 'patient_flow_config.json.txt');
+}
+
+//fill wards to specified occupancy
+function seed(wards, patient_config, target_occ){
+	var local_patient_conf = Object.assign({}, patient_config) //needed because config is global
+	var patient_generator = new PatientGenerator(local_patient_conf)
+	var patients = []
+	patient_generator.config.max_patients = Infinity
+	var ward_names = Object.keys(wards)
+	ward_names.forEach(function(el){
+		var free_beds = wards[el].capacity - wards[el].admitted.length
+		if(!isFinite(free_beds) || free_beds == 0){
+			console.log("not filling ward", el, "with free space = ", free_beds)
+		} else {
+			var n_seed = Math.floor(free_beds * target_occ)
+			patient_generator.config.initial_ward = el
+			for (var i = 0; i < n_seed; i++) {
+				var pt = patient_generator.get_single()
+				wards[el].admit(pt, wards[el], 0)
+				patients.push(pt)
+			}
+		}
+
+	})
+	return {'wards': wards, 'patients': patients}
+}
+
+
+//function to build dropdown to toggle ward waiting time
+function build_wait_time_dropdown(){
+	var select = document.getElementById("wait-plot-list");
+	ward_config.forEach(function(el){
+		if(el.name != "Exit" & el.name != "Pool"){
+			var opt = document.createElement('option');
+			opt.value = el.name;
+            opt.innerHTML = el.name;
+            select.appendChild(opt);
+		}
+	})
+}
+
+function select_wait_plot_ward(){
+	var select = document.getElementById("wait-plot-list");
+	var ward = select.value
+	var wait_plot = plotWaitingTimeFreq(window.prev_result.patients, ward, "waiting", 600, 300,"mean-wait-time")
+
+}
+
+
+//to investigate causes of delay
+//may make opimisation too obvious for real use but makes dev easier
+function delayed_by(patients){
+	var delay_resource = []
+	var delay_attn = []
+	var all_pt = []
+	patients.forEach(function(el){
+		el.when_wait_met.forEach(function(wwm){
+			if(wwm.delay > 0){
+				if(wwm.attention > 0){
+					delay_attn.push(wwm.current_ward)
+				}
+				if(wwm.resources > 0){
+					delay_resource.push(wwm.current_ward)
+				}
+			}
+			all_pt.push(wwm.current_ward)
+		})
+	})
+	var res_count = strCount(delay_resource)
+	var attn_count = strCount(delay_attn)
+	var total_pt = strCount(all_pt)
+	var res_norm = {}
+	var attn_norm = {}
+	var wards = _.keys(total_pt)
+	wards.forEach(function(el){
+		res_norm[el] = res_count[el] / total_pt[el]
+		attn_norm[el] = attn_count[el] / total_pt[el]
+	})
+	return {'res_count': res_count, 'res_norm': res_norm, 'attn_count': attn_count, 'attn_norm': attn_norm, 'total': total_pt}
+}
+
+function strCount(arr){
+	var counts = {};
+
+	for (var i = 0; i < arr.length; i++) {
+	  var num = arr[i];
+	  counts[num] = counts[num] ? counts[num] + 1 : 1;
+	}
+	return counts
+}
+
+function delay_table(patients){
+	var delays = delayed_by(patients)
+	var wards = _.keys(delays.total)
+	var tbl = '' 
+	tbl += '<thead><tr><th>Ward</th><th>Attention delays (count)</th><th>Attention delays (prop)</th><th>Resource delays (count)</th><th>Resource delays (prop)</th></tr></thead>'
+	tbl += '<tbody>'
+	for (var i = 0; i < wards.length; i++) {
+		var w = wards[i]
+		
+		tbl += '<tr>'
+		tbl += '<td>' + w + '</td>'
+		tbl += '<td>' + delays.attn_count[w] + '</td>'
+		tbl += '<td>' + delays.attn_norm[w].toFixed(2) + '</td>'
+		tbl += '<td>' + delays.res_count[w] + '</td>'
+		tbl += '<td>' + delays.res_norm[w].toFixed(2) + '</td>'
+		tbl += '</tr>'
+	}
+	tbl += "</tbody>"
+	$('#delay-table').html(tbl)
+}
+
+function reset_when_run(){
+	return $('input[name=resume-mode-radios]:checked').val() == "reset"
 }
