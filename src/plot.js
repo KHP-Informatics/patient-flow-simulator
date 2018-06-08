@@ -115,6 +115,7 @@ function plotWaitingTimeFreq(patients, ward, container, width, height, text_outp
 	plotSimulationResults(result, 'results', container, "Waiting time distribution: " + ward, "waiting time", "count", width, height)
 	var mean = total/n
 	$('#' + text_output).text(mean.toFixed(2))
+	return mean
 }
 
 //histogram of delays in required wards
@@ -134,6 +135,7 @@ function plotDelayTimeFreq(patients, ward, container, width, height, text_output
 	plotSimulationResults(result, 'results', container, "Delay distribution: " + ward, "delay time", "count", width, height)
 	var mean = total/n
 	$('#' + text_output).text(mean.toFixed(2))
+	return mean
 }
 
 function plotPathLengthDistribution(patients, container, width, height, total_paths_output, top_paths_output, top_paths_limit){

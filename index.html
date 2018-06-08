@@ -153,6 +153,7 @@
   <p>Find out how well your hospital is performing.</p>
   <ul class="nav nav-tabs">
     <li role="presentation" class="active"><a href="#summary-tab" data-toggle="tab">Summary</a></li>
+    <li role="presentation"><a href="#history-tab" data-toggle="tab">History</a></li> 
     <li role="presentation"><a href="#network-tab" data-toggle="tab" id="network-tab-link">Network</a></li>
     <li role="presentation"><a href="#waiting-tab" data-toggle="tab">Waiting time</a></li>
     <li role="presentation"><a href="#occupancy-tab" data-toggle="tab">Occupancy</a></li>
@@ -355,6 +356,21 @@
 
       <div id="delay-table-container">
         <table class="table table-bordered" id="delay-table"></table>
+      </div>
+    </div>
+
+    <div role="tabpanel" class="tab-pane" id="history-tab">
+          <div class="panel panel-primary panel-help">
+            <div class="panel-heading">
+              <h3 class="panel-title">Simulation history</h3>
+            </div>
+            <div class="panel-body">
+              Performance of your hospital over consecutive simulations.
+            </div>
+          </div>
+
+      <div id="history-table-container">
+        <table class="table table-bordered" id="history-table"></table>
       </div>
     </div>
 

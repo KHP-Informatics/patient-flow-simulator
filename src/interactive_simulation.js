@@ -198,7 +198,7 @@ function run(ward_config, patient_config, simulation_config, virtual_wards){
 	//plotWaitingTimeCumulative(patients, "A&E", "waiting", 600, 300)
 	var select = document.getElementById("wait-plot-list");
 	select.value = "Emergency" //reset dropdown in case it was changed since last run
-	var wait_plot = plotWaitingTimeFreq(patients, "Emergency", "waiting", 600, 300,"mean-wait-time")
+	var wait_time = plotWaitingTimeFreq(patients, "Emergency", "waiting", 600, 300,"mean-wait-time")
 
 	var wait_target = showEmergencyWaitVsTarget(patients, simulation_config.emergency_wait_target, "patients-on-target")
 
@@ -213,9 +213,21 @@ function run(ward_config, patient_config, simulation_config, virtual_wards){
 	var q_plot = plotSimulationResults(simulation_data, "queues", "queues", "Queue length", "Time", "Number of patients", 600, 300, false)
 	var delay_tbl = delay_table(patients)
 
+	//update global tracking
 	var output_obj = {'simulation_data': simulation_data, 'patients': patients, 'wards':wards, 'end_time': time}
 	window.prev_result = output_obj
 	window.run_number += 1
+	var res_summary = get_resource_summary()
+	var summary = {}
+	summary['management'] = res_summary
+	summary['perc_under_4h'] = wait_target
+	summary['mean_emergency_wait'] = wait_time
+	window.performance_history.push(summary)
+
+	//performance between runs - must be after window.performance_history is updated
+	update_performance_history()
+
+
 	return output_obj
 }
 
@@ -264,9 +276,30 @@ function init_user_interface(patient_config, ward_config, graph_container){
 	//waiting time plot toggle
 	build_wait_time_dropdown()
 
+	//performance history table
+	clear_performance_history()
+
 }
 
 function show_resource_summary(){
+	var summary = get_resource_summary()
+	
+	//resource used
+	$('#total-resource-use').text(summary['resources']['amount'])
+	$('#total-resource-cost').text(summary['resources']['cost'])
+	//capacity
+	$('#total-capacity').text(summary['capacity']['amount'])
+	$('#total-capacity-cost').text(summary['capacity']['cost'])
+	//staff
+	$('#total-staff').text(summary['staff']['amount'])
+	$('#total-staff-cost').text(summary['staff']['cost'])
+	//overall cost
+	$('#total-cost').text(summary['total_cost'])
+	
+}
+
+function get_resource_summary(){
+	var summary = {}
 	var total_resources = 0
 	var total_capacity = 0
 	var total_staff = 0
@@ -277,23 +310,18 @@ function show_resource_summary(){
 			total_staff += el.attention
 		}
 	})
-
+	summary['staff'] = {'amount':total_staff}
+	summary['capacity'] = {'amount':total_capacity}
+	summary['resources'] = {'amount':total_resources}
 	//costs
 	var resource_cost = simulation_config.resource_cost * total_resources
 	var staff_cost = simulation_config.staff_cost * total_staff
 	var capacity_cost = simulation_config.bed_cost * total_capacity
-
-	//resource used
-	$('#total-resource-use').text(total_resources)
-	$('#total-resource-cost').text(resource_cost)
-	//capacity
-	$('#total-capacity').text(total_capacity)
-	$('#total-capacity-cost').text(capacity_cost)
-	//staff
-	$('#total-staff').text(total_staff)
-	$('#total-staff-cost').text(staff_cost)
-	//overall cost
-	$('#total-cost').text(resource_cost + staff_cost + capacity_cost)
+	summary['resources']['cost'] = resource_cost
+	summary['staff']['cost'] = staff_cost
+	summary['capacity']['cost'] = capacity_cost
+	summary['total_cost'] = resource_cost + capacity_cost + staff_cost
+	return summary
 }
 
 function show_simulation_summary(patients){
@@ -412,6 +440,7 @@ function reset_buttons(){
 function showEmergencyWaitVsTarget(patients, target, text_output){
 	var percent_on_target = emergencyWaitVsTarget(patients, target)
 	$("#" + text_output).text(percent_on_target.toFixed(2) + "%")
+	return percent_on_target
 }
 
 //change to a different preset
@@ -526,7 +555,7 @@ function delayed_by(patients){
 	var attn_count = strCount(delay_attn)
 	var total_pt = strCount(all_pt)
 	var res_norm = {}
-	var attn_norm = {}
+	var attn_norm = {}	
 	var wards = _.keys(total_pt)
 	wards.forEach(function(el){
 		res_norm[el] = res_count[el] / total_pt[el]
@@ -568,4 +597,34 @@ function delay_table(patients){
 
 function reset_when_run(){
 	return $('input[name=resume-mode-radios]:checked').val() == "reset"
+}
+
+function clear_performance_history(){
+	window.performance_history = []
+	var tbl = '' 
+	tbl += '<thead><tr><th>Run</th><th>Under 4h (%)</th><th>Mean Emergency wait</th><th>Total Staff</th><th>Total capacity</th><th>Total resources</th><th>Total cost</th></tr></thead>'
+	tbl += '<tbody></tbody>'
+	$('#history-table').html(tbl)
+}
+
+function update_performance_history(){
+	var tbl = document.getElementById('history-table')
+	var row = tbl.insertRow(-1) //position 0 will insert above the header
+	//add the last result
+	var dt = window.performance_history[window.performance_history.length - 1]
+	var c0 = row.insertCell(0)
+	c0.innerText = window.run_number
+	var c1 = row.insertCell(1)
+	c1.innerText = dt.perc_under_4h.toFixed(2)
+	var c2 = row.insertCell(2)
+	c2.innerText = dt.mean_emergency_wait.toFixed(2)
+	var c3 = row.insertCell(3)
+	c3.innerText = dt.management.staff.amount
+	var c4 = row.insertCell(4)
+	c4.innerText = dt.management.capacity.amount
+	var c5 = row.insertCell(5)
+	c5.innerText = dt.management.resources.amount
+	var c6 = row.insertCell(6)
+	c6.innerText = dt.management.total_cost
+
 }
