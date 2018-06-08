@@ -5,13 +5,15 @@ window.run_number = 0;
 window.prev_result = {};
 window.performance_history = []
 
-function run(ward_config, patient_config, simulation_config, virtual_wards){
+function run(){
 	save_patient_changes() //get changes to configuration from editor
 	save_simulation_changes()
 	default_simulation_summary()
 	reset_buttons()
 	var reset_results = reset_when_run()
+	var preset_patients = preset_patients_set()
 	var start_time = 0
+	var patient_creation_times = {} // time: [index of each patient in patients array]
 	if(reset_results || window.run_number == 0){ //always have to reset on first run
 		var wards = {}
 		var ward_names = []
@@ -24,13 +26,17 @@ function run(ward_config, patient_config, simulation_config, virtual_wards){
 			ward_names.push(el.name)
 		})
 
-		var seed_patients = true
 		var patients = []
-		if(seed_patients){
-			var seeded = seed(wards, patient_config, 0.8)
-			wards = seeded['wards']
-			patients = seeded['patients']
+		if(!preset_patients){ 
+			var seed_patients = true
+			
+			if(seed_patients){
+				var seeded = seed(wards, patient_config, 0.8)
+				wards = seeded['wards']
+				patients = seeded['patients']
+			}
 		}
+		
 	} else {
 		//need to add code to update ward config from gui
 		var wards = window.prev_result.wards
@@ -52,8 +58,12 @@ function run(ward_config, patient_config, simulation_config, virtual_wards){
 	//true whether or not the simulation is reset
 	var end_time = start_time + simulation_config.steps
 	
-
-	var patient_generator = new PatientGenerator(patient_config)
+	if(preset_patients){
+		var patient_generator = new PresetPatientGenerator(patientset)
+	} else {
+		var patient_generator = new PatientGenerator(patient_config)
+	}
+	
 
 	var simulation_data = {occupancy:{}, config: ward_config, virtual_wards: virtual_wards}
 	simulation_data['queues'] = {}
@@ -67,6 +77,7 @@ function run(ward_config, patient_config, simulation_config, virtual_wards){
 	var all_patients_created = false
 	for (var time = start_time; time < end_time; time++) {
 		console.log("step",time)
+		patient_creation_times[time] = []
 		ward_names.forEach(function(name){
 			//console.log(name, wards[name].admitted.length)
 			simulation_data.occupancy[name].push({'x':time, 'y':wards[name].admitted.length})
@@ -80,6 +91,7 @@ function run(ward_config, patient_config, simulation_config, virtual_wards){
 			new_patients.forEach(function(np){
 				wards['Pool'].admit(np, wards['Pool'], time)
 				patients.push(np)
+				patient_creation_times[time].push(patient_count)
 				patient_count += 1
 			})
 			if(new_patients.length == 0){
@@ -214,7 +226,7 @@ function run(ward_config, patient_config, simulation_config, virtual_wards){
 	var delay_tbl = delay_table(patients)
 
 	//update global tracking
-	var output_obj = {'simulation_data': simulation_data, 'patients': patients, 'wards':wards, 'end_time': time}
+	var output_obj = {'simulation_data': simulation_data, 'patients': patients, 'wards':wards, 'end_time': time, 'creation_times': patient_creation_times}
 	window.prev_result = output_obj
 	window.run_number += 1
 	var res_summary = get_resource_summary()
@@ -627,4 +639,33 @@ function update_performance_history(){
 	var c6 = row.insertCell(6)
 	c6.innerText = dt.management.total_cost
 
+}
+
+
+function export_patients(patients, times){
+	var configs = {}
+	var ts = _.keys(times)
+	ts.forEach(function(el){
+		configs[el] = []
+		times[el].forEach(function(pt_idx){
+			configs[el].push(patients[pt_idx].export())
+		})
+	})
+	return configs
+}
+
+function download_patients(patients, times){
+	var config = export_patients(patients, times)
+	var config_text = JSON.stringify(config)
+	var blob = new Blob([config_text], {type: "text/plain;charset=utf-8"});
+	saveAs(blob, 'patient_set.json.txt');
+}
+
+//quick convenience function to automatically download the definition of the previous run's patients
+function download_previous_patients(){
+	download_patients(window.prev_result.patients, window.prev_result.creation_times)
+}
+
+function preset_patients_set(){
+	return $('input[name=patient-mode-radios]:checked').val() == "preset"
 }

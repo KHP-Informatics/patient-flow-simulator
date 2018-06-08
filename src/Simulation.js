@@ -6,8 +6,10 @@ function Patient(config){
 	this.required.waits = []
 	this.required.resources = []
 	this.required.attention = []
+	this.to_export = []
 	for(var k in config){
 		this.required[k] = config[k]
+		this.to_export.push(k)
 	}
 	this.required.progress = -1
 	this.required.in_required_ward = false
@@ -24,6 +26,17 @@ function Patient(config){
 	this.current_ward = ""
 	this.target_resource_required = 0 //what are the resource needs for this patient in the next ward they have to visit. Used for priority queues.
 	this.wait_met_logged = false //flag to ensure other needs are only logged once when wait met
+
+	//export parameters for this patient so they can be saved and recreated
+	//the returned object can be used with p = new Patient(cfg) to get this patient back
+	this.export = function(){
+		var cfg = {}
+		for (var i = 0; i < this.to_export.length; i++) {
+			var k = this.to_export[i]
+			cfg[k] = this.required[k]
+		}
+		return cfg
+	}
 
 	//move to a new ward
 	this.move = function(destination, time){
@@ -90,7 +103,11 @@ function Patient(config){
 			//the observed resources per ward is not only required wards.
 			//the last element is always the current ward
 			var delta_wait = time - this.last_move_time
-			var wait_need_met = delta_wait >= this.required.waits[this.required.progress]
+			if(isNaN(parseFloat(this.required.waits[this.required.progress]))){
+				var wait_need_met = false
+			} else{
+				var wait_need_met = delta_wait >= this.required.waits[this.required.progress]
+			}
 			var resource_need_remaining = this.required.resources[this.required.progress] - this.observed.resources[this.observed.resources.length-1]
 			var resource_needs_met = resource_need_remaining <= 0
 			var attn_remaining = this.need_remaining('attention')
@@ -517,6 +534,41 @@ function PatientGenerator(config){
 		}
 		return r;
 	}
+}
+
+//same API as PatientGenerator but returns preset patients for each time step
+function PresetPatientGenerator(config){
+	this.time_to_patients = config
+	//internal properties
+	this.patients_created = 0
+	this.current_time_idx = 0
+	this.creation_times = _.keys(config).map(Number).sort(sortNumber)
+
+	this.get = function(){
+		//call repeatedly to iterate through creation times in order
+		//times may not be consistent with model times, e.g. if there is a jump between times in the config
+		var created = []
+		var now = this.creation_times[this.current_time_idx]
+		this.time_to_patients[now].forEach(function(el){
+			np = new Patient(el)
+			created.push(np)
+			this.patients_created += 1
+		})
+
+		this.current_time_idx += 1
+		return created
+	}
+
+	this.get_at = function(now){
+		//get patients for a given simulation time
+		this.time_to_patients[now].forEach(function(el){
+			np = new Patient(el)
+			created.push(np)
+			this.patients_created += 1
+		})
+		return created
+	}
+
 }
 
 /*

@@ -37,6 +37,8 @@
 
   <script type="text/javascript" src="src/graph.js"></script>
 
+  <script type="text/javascript" src="src/config/patient_set.txt.js"></script>
+
       <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -129,13 +131,22 @@
             <label for="simulation-emergency-target">Emergency wait target</label>
             <input type="text" min="1" class="form-control" id="simulation-emergency-target">
             
-            <input class="form-check-input" type="radio" name="resume-mode-radios" id="reset-sim-toggle" value="reset">
-            <label class="form-check-label" for="reset-sim-toggle">Clean slate</label>
-            <input class="form-check-input" type="radio" name="resume-mode-radios" id="continue-sim-toggle" value="resume" checked>
-            <label class="form-check-label" for="continue-sim-toggle">Resume</label>
-            <br>
+            <div>
+              Simulation history:
+              <input class="form-check-input" type="radio" name="resume-mode-radios" id="reset-sim-toggle" value="reset">
+              <label class="form-check-label" for="reset-sim-toggle">Clean slate</label>
+              <input class="form-check-input" type="radio" name="resume-mode-radios" id="continue-sim-toggle" value="resume" checked>
+              <label class="form-check-label" for="continue-sim-toggle">Resume</label>
+            </div>
+            <div>
+              Patients:
+              <input class="form-check-input" type="radio" name="patient-mode-radios" id="random-patients-toggle" value="random">
+              <label class="form-check-label" for="reset-sim-toggle">Random</label>
+              <input class="form-check-input" type="radio" name="patient-mode-radios" id="load-patients-toggle" value="preset" checked>
+              <label class="form-check-label" for="continue-sim-toggle">Preset</label>
+            </div>
 
-          <button class="btn btn-success" type="button" onclick="run(ward_config, patient_config, simulation_config, virtual_wards)">Run simulation</button>
+          <button class="btn btn-success" type="button" onclick="run()">Run simulation</button>
             <button id="change-hospital-btn" class="btn btn-primary" data-toggle="modal" data-target="#change-hospital-modal">Change hospital</button>
   <button id="download-btn" class="btn btn-primary" onclick="download_current_config()" >Download config</button>
         </div>
