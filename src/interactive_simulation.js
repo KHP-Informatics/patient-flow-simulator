@@ -234,6 +234,7 @@ function run(){
 	summary['management'] = res_summary
 	summary['perc_under_4h'] = wait_target
 	summary['mean_emergency_wait'] = wait_time
+	summary['ward_config'] = copy_ward_config(ward_config)
 	window.performance_history.push(summary)
 
 	//performance between runs - must be after window.performance_history is updated
@@ -614,7 +615,7 @@ function reset_when_run(){
 function clear_performance_history(){
 	window.performance_history = []
 	var tbl = '' 
-	tbl += '<thead><tr><th>Run</th><th>Under 4h (%)</th><th>Mean Emergency wait</th><th>Total Staff</th><th>Total capacity</th><th>Total resources</th><th>Total cost</th></tr></thead>'
+	tbl += '<thead><tr><th>Run</th><th>Under 4h (%)</th><th>Mean Emergency wait</th><th>Total Staff</th><th>Total capacity</th><th>Total resources</th><th>Total cost</th><th>Load</th></tr></thead>'
 	tbl += '<tbody></tbody>'
 	$('#history-table').html(tbl)
 }
@@ -623,7 +624,8 @@ function update_performance_history(){
 	var tbl = document.getElementById('history-table')
 	var row = tbl.insertRow(-1) //position 0 will insert above the header
 	//add the last result
-	var dt = window.performance_history[window.performance_history.length - 1]
+	var run_num = window.performance_history.length - 1 
+	var dt = window.performance_history[run_num]
 	var c0 = row.insertCell(0)
 	c0.innerText = window.run_number
 	var c1 = row.insertCell(1)
@@ -638,6 +640,9 @@ function update_performance_history(){
 	c5.innerText = dt.management.resources.amount
 	var c6 = row.insertCell(6)
 	c6.innerText = dt.management.total_cost
+	var c7 = row.insertCell(7)
+	//c7.innerHTML = "<button onclick='load_previous_config(" + window.performance_history.length - 1 + ")'>Load</button>"
+	c7.innerHTML = "<button onclick='load_previous_config(" + run_num + ")'>Load</button>"
 
 }
 
@@ -668,4 +673,20 @@ function download_previous_patients(){
 
 function preset_patients_set(){
 	return $('input[name=patient-mode-radios]:checked').val() == "preset"
+}
+
+function copy_ward_config(config){
+	var copy = []
+	for (var i = 0; i < config.length; i++) {
+		copy.push(Object.assign({},config[i]))
+	}
+	return copy
+}
+
+function load_previous_config(history_idx){
+	var cfg = window.performance_history[history_idx].ward_config
+	window.ward_config = cfg
+
+	//refresh the ward editor
+	show_config('Emergency')
 }
