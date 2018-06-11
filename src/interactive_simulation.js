@@ -87,7 +87,7 @@ function run(){
 		//add a random number of patients to the pool, with random required waiting times
 		//they will immediately be transferred to A&E
 		if(!all_patients_created){
-			var new_patients = patient_generator.get()
+			var new_patients = patient_generator.get(time)
 			new_patients.forEach(function(np){
 				wards['Pool'].admit(np, wards['Pool'], time)
 				patients.push(np)

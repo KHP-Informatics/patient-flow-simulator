@@ -544,18 +544,20 @@ function PresetPatientGenerator(config){
 	this.current_time_idx = 0
 	this.creation_times = _.keys(config).map(Number).sort(sortNumber)
 
-	this.get = function(){
+	this.get = function(now){
 		//call repeatedly to iterate through creation times in order
 		//times may not be consistent with model times, e.g. if there is a jump between times in the config
 		var created = []
-		var now = this.creation_times[this.current_time_idx]
+		if(typeof now == "undefined"){
+			now = this.creation_times[this.current_time_idx]
+			this.current_time_idx += 1
+		}
 		this.time_to_patients[now].forEach(function(el){
 			np = new Patient(el)
 			created.push(np)
 			this.patients_created += 1
 		})
 
-		this.current_time_idx += 1
 		return created
 	}
 
