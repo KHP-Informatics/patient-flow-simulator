@@ -38,7 +38,6 @@ function run(){
 		}
 		
 	} else {
-		//need to add code to update ward config from gui
 		var wards = window.prev_result.wards
 		var ward_names = []
 		var patients = []
