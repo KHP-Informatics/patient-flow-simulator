@@ -265,6 +265,7 @@ function init_user_interface(patient_config, ward_config, graph_container){
 	$("#patient-creation-limit").val(patient_config.max_patients)
 	$("#patient-batch-min").val(patient_config.batch_arrival_min)
 	$("#patient-batch-max").val(patient_config.batch_arrival_max)
+	$("#patient-batch-lambda").val(patient_config.batch_arrival_lambda)
 
 	//update simulation parameters
 	$("#simulation-steps").val(simulation_config.steps)
@@ -422,6 +423,7 @@ function save_patient_changes(){
 	patient_config.max_patients = parseFloat($("#patient-creation-limit").val())
 	patient_config.batch_arrival_min = parseFloat($("#patient-batch-min").val())
 	patient_config.batch_arrival_max = parseFloat($("#patient-batch-max").val())
+	patient_config.batch_arrival_lambda = parseFloat($("#patient-batch-lambda").val())
 }
 
 function save_simulation_changes(){
