@@ -4,12 +4,14 @@
 window.run_number = 0;
 window.prev_result = {};
 window.performance_history = []
-
+window.runner = false
+window.is_running = false
 function run(){
 	save_patient_changes() //get changes to configuration from editor
 	save_simulation_changes()
 	default_simulation_summary()
 	reset_buttons()
+	window.in_progress = true
 	var reset_results = reset_when_run()
 	var preset_patients = preset_patients_set()
 	var start_time = 0
@@ -239,7 +241,7 @@ function run(){
 	//performance between runs - must be after window.performance_history is updated
 	update_performance_history()
 
-
+	window.in_progress = false
 	return output_obj
 }
 
@@ -690,4 +692,28 @@ function load_previous_config(history_idx){
 
 	//refresh the ward editor
 	show_config('Emergency')
+}
+
+//keep running repeatedly
+function toggle_running_state(){
+	if(window.is_running){
+		//stop running
+		$('#run-once-btn').prop('disabled', true)
+		$('#run-multi-btn').prop('disabled', true)
+		clearInterval(window.runner)
+		window.is_running = false
+		while(window.in_progress){
+			console.log('.')
+		}
+		$('#run-once-btn').prop('disabled', false)
+		$('#run-multi-btn').prop('disabled', false)
+		$('#run-multi-btn').removeClass('btn-danger').addClass('btn-success').text("Run")
+	} else {
+		//start running
+		window.runner = setInterval(run, 2000)
+		window.is_running = true
+		$('#run-once-btn').prop('disabled', true)
+		$('#run-multi-btn').removeClass('btn-success').addClass('btn-danger').text('Stop simulation')
+
+	}
 }

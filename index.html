@@ -142,13 +142,14 @@
             </div>
             <div>
               Patients:
-              <input class="form-check-input" type="radio" name="patient-mode-radios" id="random-patients-toggle" value="random">
+              <input class="form-check-input" type="radio" name="patient-mode-radios" id="random-patients-toggle" value="random" checked>
               <label class="form-check-label" for="reset-sim-toggle">Random</label>
-              <input class="form-check-input" type="radio" name="patient-mode-radios" id="load-patients-toggle" value="preset" checked>
+              <input class="form-check-input" type="radio" name="patient-mode-radios" id="load-patients-toggle" value="preset">
               <label class="form-check-label" for="continue-sim-toggle">Preset</label>
             </div>
 
-          <button class="btn btn-success" type="button" onclick="run()">Run simulation</button>
+          <button class="btn btn-success" type="button"  id="run-multi-btn" onclick="toggle_running_state()">Run</button>
+          <button class="btn btn-success" type="button" id="run-once-btn" onclick="run()">Run once</button>
             <button id="change-hospital-btn" class="btn btn-primary" data-toggle="modal" data-target="#change-hospital-modal">Change hospital</button>
   <button id="download-btn" class="btn btn-primary" onclick="download_current_config()" >Download config</button>
         </div>
