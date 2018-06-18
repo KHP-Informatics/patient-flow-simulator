@@ -56,7 +56,7 @@ function plotSimulationResults(data, subset, container, title, xlab, ylab, width
 			plot_data[el] = []
 			if(proportional){
 				for (var i = 0; i < data[subset][el].length; i++) {
-					var dt = data[subset][el][i] 
+					var dt = Object.assign({},data[subset][el][i])
 					dt.y = data[subset][el][i].y / cfg[el].capacity 
 					plot_data[el].push(dt)
 				}
