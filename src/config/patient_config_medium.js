@@ -3,22 +3,22 @@ var patient_config = {
 		"Emergency" : [
 		//typically only 20% of all A+E arrivals are admitted
 		//the flow to all other wards should therefore add up to 0.2
-			{name: "Exit", weight:0.6},
-			{name: "Cardiology", weight: 0.01},
-			{name: "AcuteAssessment", weight: 0.14},
-			{name: "CriticalCare", weight: 0.02},
-			{name: "Elderly", weight: 0.02},
-			{name: "General", weight: 0.14},
-			{name: "Stroke", weight: 0.02},
-			{name: "Neurology", weight: 0.01},
-			{name: "Surgery", weight: 0.04}
+			{name: "Exit", weight:0.4},
+			{name: "Cardiology", weight: 0.05},
+			{name: "AcuteAssessment", weight: 0.16},
+			{name: "CriticalCare", weight: 0.05},
+			{name: "Elderly", weight: 0.05},
+			{name: "General", weight: 0.16},
+			{name: "Stroke", weight: 0.04},
+			{name: "Neurology", weight: 0.03},
+			{name: "Surgery", weight: 0.06}
 		],
 		"Cardiology" : [
-			{name: "Surgery", weight: 0.15},
-			{name: "Exit", weight: 0.6},
-			{name: "CriticalCare", weight: 0.1},
-			{name: "Elderly", weight: 0.05},
-			{name: "General", weight: 0.1}
+			{name: "Surgery", weight: 0.2},
+			{name: "Exit", weight: 0.4},
+			{name: "CriticalCare", weight: 0.15},
+			{name: "Elderly", weight: 0.1},
+			{name: "General", weight: 0.15}
 		],
 		"AcuteAssessment" : [
 			{name: "Elderly", weight: 0.08},
@@ -30,18 +30,22 @@ var patient_config = {
 			{name: "Cardiology", weight: 0.09}
 		],
 		"Elderly" : [
-			{name: "Exit", weight: 0.8},
-			{name: "General", weight: 0.05},
-			{name: "CriticalCare", weight: 0.05},
-			{name: "Surgery", weight: 0.05},
-			{name: "Stroke", weight: 0.05},
+			{name: "Exit", weight: 0.6},
+			{name: "General", weight: 0.1},
+			{name: "CriticalCare", weight: 0.07},
+			{name: "Surgery", weight: 0.06},
+			{name: "Stroke", weight: 0.06},
+			{name: "Cardiology", weight: 0.06},
+			{name: "Neurology", weight: 0.05}
 		],
 		"General" : [
-			{name: "Surgery", weight: 0.02},
-			{name: "Exit", weight: 0.68},
-			{name: "Elderly", weight: 0.1},
-			{name: "CriticalCare", weight: 0.1},
-			{name: "Cardiology", weight: 0.1}
+			{name: "Surgery", weight: 0.07},
+			{name: "Exit", weight: 0.5},
+			{name: "Elderly", weight: 0.11},
+			{name: "CriticalCare", weight: 0.11},
+			{name: "Cardiology", weight: 0.11},
+			{name: "Stroke", weight: 0.05},
+			{name: "Neurology", weight: 0.05}
 		],
 		"Stroke" : [
 			{name: "Neurology", weight: 0.03},
@@ -107,7 +111,7 @@ var patient_config = {
 		"Stroke" : {
 			min:5,
 			max:40,
-			lambda:4
+			lambda:10
 		},
 		"Neurology" : {
 			min:5,
@@ -117,12 +121,12 @@ var patient_config = {
 		"Surgery" : {
 			min:2,
 			max:30,
-			lambda:5
+			lambda:6
 		},
 		"CriticalCare" : {
 			min:5,
 			max:50,
-			lambda:5
+			lambda:10
 		},
 		// this is now hardcoded in the patient generator to support saving as JSON,
 		// which does not support Infinity
@@ -247,8 +251,8 @@ var patient_config = {
 	},
 max_transfers : 10,
 max_patients : 2000,
-batch_arrival_min : 5,
-batch_arrival_max : 8,
-batch_arrival_lambda : 2,
+batch_arrival_min : 1,
+batch_arrival_max : 6,
+batch_arrival_lambda : 3,
 initial_ward : "Emergency"
 }
