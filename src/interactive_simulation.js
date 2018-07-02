@@ -700,6 +700,7 @@ function toggle_running_state(){
 		//stop running
 		$('#run-once-btn').prop('disabled', true)
 		$('#run-multi-btn').prop('disabled', true)
+		$('#simulation-seconds-per-run').prop('disabled', true)
 		clearInterval(window.runner)
 		window.is_running = false
 		while(window.in_progress){
@@ -707,13 +708,103 @@ function toggle_running_state(){
 		}
 		$('#run-once-btn').prop('disabled', false)
 		$('#run-multi-btn').prop('disabled', false)
+		$('#simulation-seconds-per-run').prop('disabled', false)
 		$('#run-multi-btn').removeClass('btn-danger').addClass('btn-success').text("Run")
 	} else {
 		//start running
-		window.runner = setInterval(run, 2000)
+		var interval_time = parseFloat($('#simulation-seconds-per-run').val())*1000
+		window.runner = setInterval(run, interval_time)
 		window.is_running = true
 		$('#run-once-btn').prop('disabled', true)
+		$('#simulation-seconds-per-run').prop('disabled', true)
 		$('#run-multi-btn').removeClass('btn-success').addClass('btn-danger').text('Stop simulation')
 
 	}
+}
+
+function mean_total_occupancy(sim_data){
+	var total_capacity = 0
+	var wards = []
+	sim_data.config.forEach(function(el){
+		total_capacity += el.capacity
+		wards.push(el.name) //only real wards have a config here
+	})
+	var n_steps = sim_data.occupancy[wards[0]].length
+	//var step_occ = [] //don't use per step values for anything, only want mean
+	var step_occ_sum = 0
+	for (var i = 0; i < n_steps; i++) {
+		var pt_in_hosp = 0
+		wards.forEach(function(el){
+			pt_in_hosp += sim_data.occupancy[el][i].y
+		})
+		var step = pt_in_hosp/total_capacity
+		//step_occ.push(step)
+		step_occ_sum += step
+	}
+	var mean_occ = (step_occ_sum / n_steps) * 100
+
+	return mean_occ
+}
+
+function show_mean_occ(sim_data, container){
+	var mean = mean_total_occupancy(sim_data)
+	$("#" + container).text(mean.toFixed(2) + "%")
+}
+
+
+//useful debug function to look at long wait patients
+//eg get_long_waits('Emergency', 30)
+function get_long_waits(ward, min){
+	var long_waits = window.prev_result.patients.filter(function(el){
+		if(el.observed.waits.hasOwnProperty(ward)){
+					return el.observed.waits[ward] >= min
+				}
+		else { return false}
+		})
+	return long_waits
+}
+
+
+//total efficiency
+//for any tracked parameter e.g. wait, resources, attention
+//defined as (required / observed ) * 100
+//only calculated for patients who have been discharged
+function total_efficiency(patients, prop){
+	var total_obs = 0
+	var	total_req = 0
+	var pr = prop
+	var ignored = ['Pool','Exit']
+	if(prop == "waits"){
+		pr = "waits_arr"
+	}
+	patients.forEach(function(el){
+		if(el.current_ward.name == "Exit"){
+			//only include discharged patients
+			var arr = []
+			//iterate through observed wards
+			//can't just slice as pre-fill patients don't have the same 
+			//pattern of values that should be ignored
+			for (var i = 0; i < el.observed.wards.length; i++) {
+				if(ignored.indexOf(el.observed.wards[i]) == -1){
+					arr.push(el.observed[pr][i])
+				}
+			}
+
+			var obs = arr.reduce(function(acc, val) { 
+				val = isNaN(val) ? 0 : val
+				return acc + val; 
+			}, 0)
+			total_obs += obs
+
+			//required amount - always exclude last value
+			var req = el.required[prop].reduce(function(acc, val) { 
+				val = isNaN(val) ? 0 : val
+				return acc + val; 
+			}, 0)
+			total_req += req
+
+		}
+	})
+	var efficiency = (total_req / total_obs) * 100
+	return {'obs':total_obs, 'req': total_req, 'efficiency': efficiency, 'excess': total_obs - total_req}
 }
