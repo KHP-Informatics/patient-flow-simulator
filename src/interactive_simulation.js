@@ -198,6 +198,7 @@ function run(){
 
 	//simulation summary
 	show_simulation_summary(patients)
+	show_mean_occ(simulation_data, "mean-hosp-occ")
 	console.log("total patients:", patient_count)
 	console.log("total transfers made to free space:", transfers_to_free_space)
 	$("#overflow-transfers").text(transfers_to_free_space)
@@ -233,13 +234,23 @@ function run(){
 	var res_summary = get_resource_summary()
 	var summary = {}
 	summary['management'] = res_summary
-	summary['perc_under_4h'] = wait_target
-	summary['mean_emergency_wait'] = wait_time
+	summary['Percent under 4h'] = wait_target
+	summary['Mean emergency wait time'] = wait_time
 	summary['ward_config'] = copy_ward_config(ward_config)
+	summary['Mean total occupancy'] = mean_total_occupancy(simulation_data)
+	summary['resource_efficiency'] = total_efficiency(patients, 'resources')
+	summary['attention_efficiency'] = total_efficiency(patients, 'attention')
+	summary['wait_efficiency'] = total_efficiency(patients, 'waits')
+	//put some key variables directly on object for plotting
+	summary['Length of stay efficiency'] = summary['wait_efficiency']['efficiency']
+	summary['Staff time efficiency'] = summary['attention_efficiency']['efficiency']
+	summary['Resource use efficiency'] = summary['resource_efficiency']['efficiency']
+	summary['Total cost'] = summary['management']['total_cost']
 	window.performance_history.push(summary)
 
 	//performance between runs - must be after window.performance_history is updated
 	update_performance_history()
+	update_history_plot()
 
 	window.in_progress = false
 	return output_obj
@@ -618,7 +629,7 @@ function reset_when_run(){
 function clear_performance_history(){
 	window.performance_history = []
 	var tbl = '' 
-	tbl += '<thead><tr><th>Run</th><th>Under 4h (%)</th><th>Mean Emergency wait</th><th>Total Staff</th><th>Total capacity</th><th>Total resources</th><th>Total cost</th><th>Load</th></tr></thead>'
+	tbl += '<thead><tr><th>Run</th><th>Under 4h (%)</th><th>Mean Emergency wait</th><th>Total occupancy (%)</th><th>Length of stay efficiency (%)</th><th>Resource efficiency (%)</th><th>Staff time efficiency (%)</th><th>Total Staff</th><th>Total capacity</th><th>Total resources</th><th>Total cost</th><th>Load</th></tr></thead>'
 	tbl += '<tbody></tbody>'
 	$('#history-table').html(tbl)
 }
@@ -627,23 +638,48 @@ function update_performance_history(){
 	var tbl = document.getElementById('history-table')
 	var row = tbl.insertRow(-1) //position 0 will insert above the header
 	//add the last result
+	var cn = 0
 	var run_num = window.performance_history.length - 1 
 	var dt = window.performance_history[run_num]
-	var c0 = row.insertCell(0)
+	var c0 = row.insertCell(cn)
 	c0.innerText = window.run_number
-	var c1 = row.insertCell(1)
-	c1.innerText = dt.perc_under_4h.toFixed(2)
-	var c2 = row.insertCell(2)
-	c2.innerText = dt.mean_emergency_wait.toFixed(2)
-	var c3 = row.insertCell(3)
+	cn += 1 
+	var c1 = row.insertCell(cn)
+	c1.innerText = dt['Percent under 4h'].toFixed(2)
+	cn += 1
+	var c2 = row.insertCell(cn)
+	c2.innerText = dt['Mean emergency wait time'].toFixed(2)
+	cn += 1
+	var c3 = row.insertCell(cn)
+	c3.innerText = dt['Mean total occupancy'].toFixed(2)
+
+	cn += 1
+	var c3 = row.insertCell(cn)
+	c3.innerText = dt.wait_efficiency.efficiency.toFixed(2)
+
+	cn += 1
+	var c3 = row.insertCell(cn)
+	c3.innerText = dt.resource_efficiency.efficiency.toFixed(2)
+
+	cn += 1
+	var c3 = row.insertCell(cn)
+	c3.innerText = dt.attention_efficiency.efficiency.toFixed(2)
+
+
+	cn += 1
+	var c3 = row.insertCell(cn)
 	c3.innerText = dt.management.staff.amount
-	var c4 = row.insertCell(4)
+	cn += 1
+	var c4 = row.insertCell(cn)
 	c4.innerText = dt.management.capacity.amount
-	var c5 = row.insertCell(5)
+	cn += 1
+	var c5 = row.insertCell(cn)
 	c5.innerText = dt.management.resources.amount
-	var c6 = row.insertCell(6)
+	cn += 1
+	var c6 = row.insertCell(cn)
 	c6.innerText = dt.management.total_cost
-	var c7 = row.insertCell(7)
+	cn += 1
+	var c7 = row.insertCell(cn)
 	//c7.innerHTML = "<button onclick='load_previous_config(" + window.performance_history.length - 1 + ")'>Load</button>"
 	c7.innerHTML = "<button onclick='load_previous_config(" + run_num + ")'>Load</button>"
 
