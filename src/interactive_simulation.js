@@ -6,6 +6,7 @@ window.prev_result = {};
 window.performance_history = []
 window.runner = false
 window.is_running = false
+window.history_plot_selection = ""
 function run(){
 	save_patient_changes() //get changes to configuration from editor
 	save_simulation_changes()
@@ -304,6 +305,15 @@ function init_user_interface(patient_config, ward_config, graph_container){
 
 	//performance history table
 	clear_performance_history()
+
+	//performance history plot
+	update_history_plot()
+
+}
+
+function update_history_plot(){
+	window.history_plot_selection = $('#history-plot-select').val()
+	plotSimulationHistory(window.performance_history, window.history_plot_selection, 'history-plot-container', 'history', 'time', window.history_plot_selection, 400, 400 )
 
 }
 

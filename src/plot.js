@@ -208,3 +208,70 @@ function plotPathLengthDistribution(patients, container, width, height, total_pa
 	$('#' + top_paths_output).html(tbl)
 
 }
+
+function plotSimulationHistory(data, subset, container, title, xlab, ylab, width, height){
+	var plot_name = container + '-plot'
+	$('#' + plot_name).remove(); 
+ 	$('#' + container).append('<canvas id="'+plot_name+'"><canvas>');
+	var ctx = document.getElementById(plot_name).getContext("2d");
+    ctx.canvas.width = width;
+    ctx.canvas.height = height;
+	var scatter_config = {
+	    type: 'line',
+	    data: {
+	        datasets: []
+	    },
+	    options: {
+	    	responsive: false,
+            maintainAspectRatio: false,
+	        scales: {
+	            xAxes: [{
+	                type: 'linear',
+	                position: 'bottom',
+                    beginAtZero: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: xlab
+                      }
+	            }],
+                yAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: ylab
+                      }
+                }]
+	        },
+            title: {
+                display: true,
+                text: title
+            }
+	    }
+	}
+
+
+
+	
+	var plot_data = []
+	plot_data[subset] = []
+	for (var i = 0; i < data.length; i++) {
+		plot_data[subset].push({x: i, y: data[i][subset]})
+	}
+
+
+	//push each dataset
+	//remember to add chartjs specific details
+
+	line_data = {
+		label: subset,
+        lineTension: 0, //set to zero to draw stright lines between points
+        fill: false,
+        //steppedLine: true, //alternative to straigh lines between points, technically more correct
+        data: plot_data[subset]
+    }
+	scatter_config.data.datasets.push(line_data)
+
+
+	//window.myLine = new Chart(ctx, scatter_config);
+    var myLine = new Chart(ctx, scatter_config);
+    return myLine;
+}

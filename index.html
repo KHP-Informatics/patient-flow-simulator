@@ -221,6 +221,7 @@
         <ul class="list-group">
           <li class="list-group-item">Mean Emergency wait: <div class="inline" id="mean-wait-time"></div></li>
           <li class="list-group-item">Emergency visits meeting target: <div class="inline" id="patients-on-target"></div></li>
+          <li class="list-group-item">Mean hospital occupancy: <div class="inline" id="mean-hosp-occ"></div></li>
         </ul>
       </div>
 
@@ -386,7 +387,17 @@
               Performance of your hospital over consecutive simulations.
             </div>
           </div>
-
+          <select id='history-plot-select'>
+            <option value='Mean emergency wait time' selected="selected">Mean emergency wait</option>
+            <option value='Percent under 4h'>Percent under 4h</option>
+            <option value='Mean total occupancy'>Mean total occupancy</option>
+            <option value='Length of stay efficiency'>Length of stay efficiency</option>
+            <option value='Staff time efficiency'>Staff time efficiency</option>
+            <option value='Resource use efficiency'>Resource use efficiency</option>
+            <option value='Total cost'>Total cost</option>
+          </select>
+          <button class="btn btn-default" onclick="update_history_plot()">Plot</button>
+          <div id='history-plot-container'></div>
       <div id="history-table-container">
         <table class="table table-bordered" id="history-table"></table>
       </div>

@@ -598,12 +598,14 @@ Array.prototype.remove = function(element) {
 function calculateWaitingTimes(patients){
 	patients.forEach(function(el){
 		el.observed.waits = {}
+		el.observed.waits_arr = []
 		el.observed.wards.forEach(function(w){
 			el.observed.waits[w] = []
 		})
 		for (var i = 0; i < el.observed.wards.length - 1; i++) {
 			var delta = el.observed.entry_times[i+1] - el.observed.entry_times[i]
 			el.observed.waits[el.observed.wards[i]].push(delta)
+			el.observed.waits_arr.push(delta)
 		}
 	})
 }
