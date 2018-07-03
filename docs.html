@@ -106,7 +106,10 @@
   <h3>Analysis</h3>
   <p>Find out how well your hospital is performing. Before you run the simulation the first time, most of these tabs will be empty. The main exception is the Network tab, which initially shows the model used by the simulation to generate patients. All tabs are documented in blue information boxes in the simulator itself.</p>
 
+<h4>History</h4>
   <p>The "History" tab is particularly complex. It allows you to track the progress of your hospital (either over time, or as you investigate the effect of changing the simulation parameters on the same patients.). From each row in the results, you can re-load the configuration of the hospital that you used for that run. Above the table, a chart is generated to show various performance metrics over time (selected in the dropdown list), which is automatically updated as the simulation runs.</p>
+
+  <p>The efficiency metrics in the history table (length of stay, resource use, staff time) show how the actual usage in your hospital compares to the minimum requirements needed to treat all patients admitted in the simulation. For example, each patient has a minimum possible length of stay that cannot be reduced, which is due to their treatment needs. If their actual length of stay equals this minimum value, the efficiency is 100%. Similarly, staff time and resource use represent excessive expenditure (due to over-budgeting or unnecessarily long length of stay).</p>
   
 
 </div>
