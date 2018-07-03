@@ -51,21 +51,38 @@
       <dt>Capacity</dt>
       <dd>The number of beds in the ward. Cannot be zero.</dd>
       <dt>Resources</dt>
-      <dd>Resources is a general term for all requirements other than beds, e.g. staff, medicine, equipment.
+      <dd>Resources is a general term for all requirements other than beds and staff, e.g medicine, equipment, lab tests.
       The number of resources available doesn't have a unit, it's a relative measure. Think of it as the total cost per hour for whatever resources the ward needs.</dd>
       <dt>Resource policy</dt>
-      <dd>How should the available resources be divided between the admitted patients? The options are "Equal", "Highest first" and "Lowest first". With an "equal" policy, the available resources are divided evenly between all patients. "Highest first" spends more resources treating patients that need more care, potentially delaying less serious patients. "Lowest first" starts by treating the least costly patients, potentially not leaving enough resources for high-need cases but also potentially allowing a large number of simple cases to be discharged quickly.</dd>
+      <dd>How should the available resources be divided between the admitted patients? The options are "Equal", "Highest first", "Biased highest first" and "Lowest first". With an "equal" policy, the available resources are divided evenly between all patients. "Highest first" starts by treating patients that need more care, spending time and resources on them first, potentially delaying less serious patients if all available resources or staff are already used. "Biased highest first" attempts to limit the impact on other patients by ensuring all patients receive at least some treatment, but prioritising more serious/ urgent cases. "Lowest first" starts by treating the least costly patients, potentially not leaving enough resources for high-need cases but also potentially allowing a large number of simple cases to be discharged quickly.</dd>
       <dt>Queue policy</dt>
       <dd>If there are more patients that need to be admitted to a ward than there are beds available, how should the choice of who to admit be made? Options are "First-come, first-served", "Highest need first" and "Lowest need first". This means some patients will not be admitted. These patients (that are waiting but are not admitted) will remain in the queue untill they are admitted. With a "First-come, first-served" policy, there is no queue jumping for any reason, regardless of the urgency of the patients waiting. "Highest need first" prioritises urgent cases. "Lowest need first" priortises simple cases.</dd>
       <dt>Accept overflow</dt>
       <dd>If a ward has empty beds, should it make these beds available to accept patients from other wards that are at capacity and need to free up space? The options are "Always" and "Never". If these beds are later needed, they can only become available by transferring the (overflow) patient somewhere else.</dd>
+      <dt>Begin boarding after</dt>
+      <dd>This option is currently only available for the Emergency department. Patients who are ready for admission from the Emergency department may have to wait for a bed in their destination ward to be available. This parameter specifies the number of hours (steps in the simulation) to allow a patient to wait in the Emergency department before trying to "board" them in another ward.</dd>
     </dl>
     <h4>Simulation setup</h4>
-    <p>Here you can start the simulation, and also change some parameters that would increase or decrease the pressure on your hospital. By default the settings reproduce a fairly typical month with typically 3 admissions from the Emergency Department per hour. You should not use these settings as a way to "improve" the performance of your hospital.</p>
+    <p>Here you can start the simulation, and also change some parameters that would increase or decrease the pressure on your hospital. By default the settings reproduce a fairly typical month with typically 3 admissions from the Emergency Department per hour. You should not use these settings as a way to "improve" the performance of your hospital, but they should be used to investigate how your system copes with increased demand.</p>
 
-    <p>The default hospital is designed to be complex enough to be interesting, but not overwhelming in the context of a 30-60 min session. Every aspect of the hospital can be configured and uploaded, including the number of wards and their default settings and the probability of different types of patients arriving. Changing the core hospital configuration is <a href="./developer.html">documented here</a>. Students using the tool are not expected to modify the basic configuration, this is an option for the organisers. However, it may be useful to download your current settings (the "download config" button). This includes all the current options set in the ward management section, so this is a convenient way to save your current settings and return to them later for comparison.</p>
+    <p>The default hospital is designed to be complex enough to be interesting, but not overwhelming in the context of a 30-60 min session. Every aspect of the hospital can be configured and uploaded, including the number of wards and their default settings and the probability of different types of patients arriving. Changing the core hospital configuration is <a href="./developer.html">documented here</a>. Students using the tool are not expected to modify the basic configuration, this is an option for the organisers. However, it may be useful to download your current settings (the "download config" button). This includes all the current options set in the ward management section, so this is a convenient way to save your current settings and return to them later for comparison. You can also reload the configuration of any previous run from the "History" tab in the Analysis section, but these results are lost when the page is closed or refreshed.</p>
 
-    <p>Click the green "Run" button to start the simulation.</p>
+    <p>When running the simulation, you can choose to:
+      <ol>
+        <li>Begin a new simulation from scratch ("Clean slate")</li>
+        <li>Continue where you left off in the previous run ("Resume")</li>
+        <li>Modify your hospital to understand how performance would have been affected for the previous batch of patients ("Repeat previous")</li>
+      </ol>
+    The patients arriving at your hospital can be:
+    <ol>
+      <li>The same as the previous run (if "Repeat previous" is selected for simulation history)</li>
+      <li>New patients ("Generate")</li>
+      <li>A preset sequence of patients ("Preset")</li>
+    </ol>
+    </p>
+
+
+    <p>Click the green "Run" button to start the simulation. By default it will simulate 1 day every 2 seconds (simulation steps = 24, wait between runs = 2) and will keep going until you click the red "Stop simulation" button that appears. To run a single simulation, click "Run once".</p>
     
     <dl>
       <dt>Simulation steps</dt>
@@ -74,16 +91,22 @@
       <dd>Patients arrive at random, so we don't know how many will arrive or when. This parameter sets a limit on the total number of patients that will ever be created in the simulation. After this point no more patients will arrive but any patients currently in the hospital will continue their visit.</dd>
       <dt>Min arrivals per step</dt>
       <dd>What is the fewest patients that can arrive in the Emergency Department per step of the simulation. Reasonable bounds depend on how long you're taking 1 step to mean. By default 1 step is 1 hour, so 1 admission is reasonable. The simulation is slightly unstable if this is zero.</dd>
+      <dt>Expected arrivals per step</dt>
+      <dd>The typical number of patients arriving at the Emergency Department per step of the simulation. Reasonable bounds depend on how long you're taking 1 step to mean.  </dd>
       <dt>Max arrivals per step</dt>
       <dd>What is the most patients that can arrive in the Emergency Department per step of the simulation. Reasonable bounds depend on how long you're taking 1 step to mean. By default 1 step is 1 hour, so 4 admissions are reasonable.</dd>
       <dt>Emergency wait target</dt>
       <dd>Equivalent to the UK national 4-hour waiting time standard. By default this is 4 as 1 step is interpreted as 1 hour. This does not affect the simulation itself, but is used in the analysis.</dd>
+      <dt>Wait between runs (s)</dt>
+      <dd>The number of seconds to wait between repeated runs of the simulation. When you click "Run", the simulation runs every few seconds as defined by this parameter. It does not affect the performance in any way.</dd>
     </dl>
 
 
   <hr />
   <h3>Analysis</h3>
   <p>Find out how well your hospital is performing. Before you run the simulation the first time, most of these tabs will be empty. The main exception is the Network tab, which initially shows the model used by the simulation to generate patients. All tabs are documented in blue information boxes in the simulator itself.</p>
+
+  <p>The "History" tab is particularly complex. It allows you to track the progress of your hospital (either over time, or as you investigate the effect of changing the simulation parameters on the same patients.). From each row in the results, you can re-load the configuration of the hospital that you used for that run. Above the table, a chart is generated to show various performance metrics over time (selected in the dropdown list), which is automatically updated as the simulation runs.</p>
   
 
 </div>
