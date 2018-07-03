@@ -254,7 +254,7 @@ function run(){
 	summary['Percent under 4h'] = wait_target
 	summary['Mean emergency wait time'] = wait_time
 	summary['ward_config'] = copy_ward_config(ward_config)
-	summary['Mean total occupancy'] = mean_total_occupancy(simulation_data)
+	summary['Mean total occupancy'] = mean_total_occupancy(simulation_data, ['Emergency']) //ignoring emergency
 	summary['resource_efficiency'] = total_efficiency(patients, 'resources')
 	summary['attention_efficiency'] = total_efficiency(patients, 'attention')
 	summary['wait_efficiency'] = total_efficiency(patients, 'waits')
@@ -795,12 +795,14 @@ function toggle_running_state(){
 	}
 }
 
-function mean_total_occupancy(sim_data){
+function mean_total_occupancy(sim_data, ignore){
 	var total_capacity = 0
 	var wards = []
 	sim_data.config.forEach(function(el){
-		total_capacity += el.capacity
-		wards.push(el.name) //only real wards have a config here
+		if(ignore.indexOf(el.name) < 0){
+			total_capacity += el.capacity
+			wards.push(el.name) //only real wards have a config here
+		}
 	})
 	var n_steps = sim_data.occupancy[wards[0]].length
 	//var step_occ = [] //don't use per step values for anything, only want mean
@@ -820,7 +822,7 @@ function mean_total_occupancy(sim_data){
 }
 
 function show_mean_occ(sim_data, container){
-	var mean = mean_total_occupancy(sim_data)
+	var mean = mean_total_occupancy(sim_data, ['Emergency'])
 	$("#" + container).text(mean.toFixed(2) + "%")
 }
 
