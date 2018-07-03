@@ -7,7 +7,8 @@ attention: 30,
 resource_distribution: "divide_evenly",
 accept_overflow: "never",
 queue_policy: "MaxPQ",
-fill_colour: "#F6D8AE"
+fill_colour: "#F6D8AE",
+begin_boarding_after: 8
 },
 {
 name: "Cardiology",

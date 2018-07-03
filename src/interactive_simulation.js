@@ -7,6 +7,7 @@ window.performance_history = []
 window.runner = false
 window.is_running = false
 window.history_plot_selection = ""
+window.emergency_board_after = 8 //how many stesp to let patients wait in ED before trying to board them
 function run(){
 	save_patient_changes() //get changes to configuration from editor
 	save_simulation_changes()
@@ -153,14 +154,19 @@ function run(){
 			if(wards[el].at_capacity){ 
 				if(wards[el].entry_queue.length() > 0){
 					ward_freeing_order.push(el)
-				}
+				} 
 			} else {
 				if(wards[el].will_accept_overflow()){
 					wards_with_space.push(el)
 				}	
 			}
 		})
-		console.log("wards at capacity with queues: ", ward_freeing_order)
+		//the emergency ward is a special case were we may want to trigger boarding
+		//even if it doesn't have an entry queue
+		if(ward_freeing_order.indexOf('Emergency') == -1){
+			ward_freeing_order.push('Emergency')
+		}
+		console.log("wards at capacity with queues (and emergency): ", ward_freeing_order)
 		console.log("wards with free space: ", wards_with_space)
 		var destination_ward_index = 0 //index in wards_with_space
 		ward_freeing_order.forEach(function(el){
@@ -169,9 +175,19 @@ function run(){
 			//while ward.admit_from returns true, keep sending patients
 
 			//patients that can be moved
-			var to_move = wards[el].admitted.filter(function(p){
-				return p.can_move
-			})
+			if(el == "Emergency"){
+				//for the emergency ward, only board after very long waits
+				var to_move = wards[el].admitted.filter(function(p){
+					var long_wait = (time - p.last_move_time) > window.emergency_board_after
+					return p.can_move && long_wait
+				})
+			} else {
+				//for all other wards, any patient ready to be transferred can be boarded
+				var to_move = wards[el].admitted.filter(function(p){
+					return p.can_move
+				})
+			}
+			
 			console.log(to_move.length, " patients can move from ward ", el)
 			var i = 0
 			while(i < to_move.length & destination_ward_index < wards_with_space.length){
@@ -414,6 +430,14 @@ function show_config(ward){
     $('#ward-resource-policy').val(selected_ward_config.resource_distribution);
     $('#ward-overflow-policy').val(selected_ward_config.accept_overflow);
     $('#ward-queue-policy').val(selected_ward_config.queue_policy);
+    if(ward == "Emergency"){
+		$('#board-from-container').removeClass('hidden');
+		$('#ward-board-from').val(selected_ward_config.begin_boarding_after)
+
+	} else {
+		$('#board-from-container').addClass('hidden');
+		$('#ward-board-from').val(1000) //the value is ignored anyway
+	}
 
     //unselect all ward buttons
     $("button[id^=ward-btn]").removeClass('selected')
@@ -436,6 +460,9 @@ function save_ward_changes(){
     selected_ward_config.resource_distribution = $('#ward-resource-policy').val()
     selected_ward_config.accept_overflow = $('#ward-overflow-policy').val()
     selected_ward_config.queue_policy = $('#ward-queue-policy').val()
+    if(ward == 'Emergency'){
+    	selected_ward_config.begin_boarding_after = parseFloat($('#ward-board-from').val())
+    }
 
     //total resources and capacity
     show_resource_summary()
