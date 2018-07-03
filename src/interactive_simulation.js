@@ -14,11 +14,11 @@ function run(){
 	default_simulation_summary()
 	reset_buttons()
 	window.in_progress = true
-	var reset_results = reset_when_run()
+	var reset_results = reset_when_run() //reset, resume, repeat
 	var preset_patients = preset_patients_set()
 	var start_time = 0
 	var patient_creation_times = {} // time: [index of each patient in patients array]
-	if(reset_results || window.run_number == 0){ //always have to reset on first run
+	if(reset_results == 'reset' || window.run_number == 0){ //always have to reset on first run
 		var wards = {}
 		var ward_names = []
 		ward_config.forEach(function(el){
@@ -41,6 +41,23 @@ function run(){
 			}
 		}
 		
+	} else if(reset_results == "repeat"){
+		//put all wards back to their state at the start of the previous run
+		var wards = window.prev_result.ward_initial_state
+		var ward_names = []
+		var patients = []
+		//collect references to patients who are currently admitted to hospital
+		//put them in the patients list so they can be updated and tracked
+		ward_config.forEach(function(el){
+			ward_names.push(el.name)
+			patients = patients.concat(wards[el.name].admitted)
+			wards[el.name].update_config(el) //make any changes to ward config based on GUI. Admitted patients are kept. 
+		})
+		virtual_wards.forEach(function(el){
+			ward_names.push(el.name)
+		})
+		start_time = window.prev_result.start_time //needed so times work out for the previous set of patients
+		
 	} else {
 		var wards = window.prev_result.wards
 		var ward_names = []
@@ -58,11 +75,19 @@ function run(){
 		start_time = window.prev_result.end_time + 1 //needed so times work out for patients still in hospital
 		
 	}
+
+	//now all wards are configured, save initial state 
+	window.prev_result['ward_initial_state'] = deepClone(wards)
+	window.prev_result['start_time'] = start_time
+
 	//true whether or not the simulation is reset
 	var end_time = start_time + simulation_config.steps
 	
 	if(preset_patients){
 		var patient_generator = new PresetPatientGenerator(patientset)
+	} else if(reset_results == "repeat"){
+		var prev_pt_set = export_patients(window.prev_result.patients, window.prev_result.creation_times)
+		var patient_generator = new PresetPatientGenerator(prev_pt_set)
 	} else {
 		var patient_generator = new PatientGenerator(patient_config)
 	}
@@ -246,7 +271,7 @@ function run(){
 
 	//update global tracking
 	var output_obj = {'simulation_data': simulation_data, 'patients': patients, 'wards':wards, 'end_time': time, 'creation_times': patient_creation_times}
-	window.prev_result = output_obj
+	window.prev_result = Object.assign(window.prev_result, output_obj)
 	window.run_number += 1
 	var res_summary = get_resource_summary()
 	var summary = {}
@@ -660,7 +685,7 @@ function delay_table(patients){
 }
 
 function reset_when_run(){
-	return $('input[name=resume-mode-radios]:checked').val() == "reset"
+	return $('input[name=resume-mode-radios]:checked').val()
 }
 
 function clear_performance_history(){
