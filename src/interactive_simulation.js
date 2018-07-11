@@ -549,12 +549,14 @@ function upload_config(){
 		var textType = /text.*/
 		if(file.type.match(textType) ){
 			console.log('file type ok ')
-			uploaded_config = JSON.parse(reader.result)
+			var uploaded_config = JSON.parse(reader.result)
 			patient_config = uploaded_config.patient_config
 			ward_config = uploaded_config.ward_config
 			simulation_config = uploaded_config.simulation_config
 			init_user_interface(patient_config, ward_config, 'cy')
 			$("#change-hospital-modal").modal('hide')
+			//refresh the ward editor
+			show_config('Emergency')
 			
 		} else {
 			alert("Error: Not a valid file type.")
