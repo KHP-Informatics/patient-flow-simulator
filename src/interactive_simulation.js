@@ -908,3 +908,12 @@ function total_efficiency(patients, prop){
 	var efficiency = (total_req / total_obs) * 100
 	return {'obs':total_obs, 'req': total_req, 'efficiency': efficiency, 'excess': total_obs - total_req}
 }
+
+function set_prng_seed(seed){
+	window.prng_seed = seed
+	Math.seedrandom(window.prng_seed);
+}
+
+function get_prng_seed(){
+	return window.prng_seed
+}

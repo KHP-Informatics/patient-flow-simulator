@@ -11,6 +11,7 @@
   <link href="css/style.css" rel="stylesheet" />
   <link rel="stylesheet" type="text/css" href="src/lib/bootstrap-3.3.7-dist/css/bootstrap.min.css">
   <title>Hospital flow simulation</title>
+  <script src="src/lib/seedrandom.min.js"></script>
   <script src="src/lib/Chart.bundle.min.js"></script>
   <script type="text/javascript" src="src/lib/underscore-min.js"></script>
   <script src="src/lib/utils.js"></script>
@@ -461,6 +462,9 @@
       
   <script type="text/javascript">
     init_user_interface(patient_config, ward_config, 'cy')
+    prng_seed = Math.random().toString()
+    //Math.seedrandom('hello.');
+    set_prng_seed(prng_seed) //also updates window.prng_seed
   </script>
 
 
