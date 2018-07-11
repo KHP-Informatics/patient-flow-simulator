@@ -354,7 +354,7 @@ function init_user_interface(patient_config, ward_config, graph_container){
 
 function update_history_plot(){
 	window.history_plot_selection = $('#history-plot-select').val()
-	plotSimulationHistory(window.performance_history, window.history_plot_selection, 'history-plot-container', 'history', 'time', window.history_plot_selection, 400, 400 )
+	plotSimulationHistory(window.performance_history, window.history_plot_selection, 'history-plot-container', 'history', 'Run number', window.history_plot_selection, 400, 400 )
 
 }
 
