@@ -15,6 +15,13 @@ function plotSimulationResults(data, subset, container, title, xlab, ylab, width
 	    options: {
 	    	responsive: false,
             maintainAspectRatio: false,
+            animation: {
+           	 duration: 0 // general animation time
+	        },
+	        hover: {
+	            animationDuration: 0 // duration of animations when hovering an item
+	        },
+	        responsiveAnimationDuration: 0,
 	        scales: {
 	            xAxes: [{
 	                type: 'linear',
@@ -224,6 +231,13 @@ function plotSimulationHistory(data, subset, container, title, xlab, ylab, width
 	    options: {
 	    	responsive: false,
             maintainAspectRatio: false,
+            animation: {
+           	 duration: 0 // general animation time
+	        },
+	        hover: {
+	            animationDuration: 0 // duration of animations when hovering an item
+	        },
+	        responsiveAnimationDuration: 0,
 	        scales: {
 	            xAxes: [{
 	                type: 'linear',
