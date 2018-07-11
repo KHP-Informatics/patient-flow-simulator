@@ -247,7 +247,7 @@ function run(){
 	//update all patients with their waiting times
 	calculateWaitingTimes(patients)
 	console.log(simulation_data)
-	var occ_plot = plotSimulationResults(simulation_data, 'occupancy', "occupancy", "Ward Occupancy", "Time", "Number of patients", 600, 300, true)
+	var occ_plot = plotSimulationResults(simulation_data, 'occupancy', "occupancy", "Ward Occupancy", "Time", "Occupancy (%)", 600, 300, true)
 
 
 	//plot waiting times
