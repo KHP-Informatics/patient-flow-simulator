@@ -809,7 +809,7 @@ function toggle_running_state(){
 		$('#run-once-btn').prop('disabled', false)
 		$('#run-multi-btn').prop('disabled', false)
 		$('#simulation-seconds-per-run').prop('disabled', false)
-		$('#run-multi-btn').removeClass('btn-danger').addClass('btn-success').text("Run")
+		$('#run-multi-btn').removeClass('btn-danger').addClass('btn-success').html('<span class="glyphicon glyphicon-play" aria-hidden="true"></span> Run')
 	} else {
 		//start running
 		var interval_time = parseFloat($('#simulation-seconds-per-run').val())*1000
@@ -817,7 +817,7 @@ function toggle_running_state(){
 		window.is_running = true
 		$('#run-once-btn').prop('disabled', true)
 		$('#simulation-seconds-per-run').prop('disabled', true)
-		$('#run-multi-btn').removeClass('btn-success').addClass('btn-danger').text('Stop simulation')
+		$('#run-multi-btn').removeClass('btn-success').addClass('btn-danger').html('<span class="glyphicon glyphicon-pause" aria-hidden="true"></span> Pause')
 
 	}
 }
