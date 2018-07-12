@@ -238,6 +238,9 @@ function run(){
 		
 	} // end of simulation loop
 
+	//clear patients from Exit to prevent them accumulating
+	wards.Exit.admitted = []
+
 	//simulation summary
 	show_simulation_summary(patients)
 	show_mean_occ(simulation_data, "mean-hosp-occ")
