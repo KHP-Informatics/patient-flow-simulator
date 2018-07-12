@@ -72,9 +72,9 @@ fill_colour: "#0DE3FF"
 },
 {
 name: "Surgery",
-capacity: 15,
-resources: 10,
-attention: 10,
+capacity: 20,
+resources: 15,
+attention: 15,
 resource_distribution: "divide_evenly",
 accept_overflow: "always",
 queue_policy: "SimpleQueue",
