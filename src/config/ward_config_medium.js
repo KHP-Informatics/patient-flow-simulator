@@ -88,6 +88,6 @@ attention: 20,
 resource_distribution: "divide_evenly",
 accept_overflow: "always",
 queue_policy: "SimpleQueue",
-fill_colour: "#DA4167"
+fill_colour: "#FF69B4"
 }
 ]
