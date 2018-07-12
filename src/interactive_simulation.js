@@ -35,7 +35,7 @@ function run(){
 			var seed_patients = true
 			
 			if(seed_patients){
-				var seeded = seed(wards, patient_config, 0.8)
+				var seeded = seed(wards, patient_config, 0.25)
 				wards = seeded['wards']
 				patients = seeded['patients']
 			}
