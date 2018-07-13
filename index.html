@@ -395,17 +395,27 @@
               Monitor the performance of your hospital over consecutive simulations. You can reload any previous configuration from the history table. Note that as occupancy only counts admitted patients, the Emergency ward is not included. 
             </div>
           </div>
-          <select id='history-plot-select'>
-            <option value='Mean emergency wait time' selected="selected">Mean emergency wait</option>
-            <option value='Percent under 4h'>Percent under 4h</option>
-            <option value='Mean total occupancy'>Mean total occupancy</option>
-            <option value='Length of stay efficiency'>Length of stay efficiency</option>
-            <option value='Staff time efficiency'>Staff time efficiency</option>
-            <option value='Resource use efficiency'>Resource use efficiency</option>
-            <option value='Total cost'>Total cost</option>
-          </select>
-          <button class="btn btn-default" onclick="update_history_plot()">Plot</button>
-          <div id='history-plot-container'></div>
+          <div class="row">
+            <div class="col-md-6">
+              <select id='history-plot-select'>
+                <option value='Mean emergency wait time' selected="selected">Mean emergency wait</option>
+                <option value='Percent under 4h'>Percent under 4h</option>
+                <option value='Mean total occupancy'>Mean total occupancy</option>
+                <option value='Length of stay efficiency'>Length of stay efficiency</option>
+                <option value='Staff time efficiency'>Staff time efficiency</option>
+                <option value='Resource use efficiency'>Resource use efficiency</option>
+                <option value='Total cost'>Total cost</option>
+                <option value='Score'>Score</option>
+              </select>
+              <button class="btn btn-default" onclick="update_history_plot()">Plot</button>
+              <div id='history-plot-container'></div>
+            </div>
+            <div class="col-md-6">
+               <div id='summary-plot-container'></div>
+            </div>
+          </div>
+          
+         
       <div id="history-table-container">
         <table class="table table-bordered" id="history-table"></table>
       </div>

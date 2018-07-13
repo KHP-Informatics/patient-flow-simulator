@@ -289,3 +289,98 @@ function plotSimulationHistory(data, subset, container, title, xlab, ylab, width
     var myLine = new Chart(ctx, scatter_config);
     return myLine;
 }
+
+function plotSimulationSummary(data, subset, container, title, xlab, ylab, width, height){
+	var plot_name = container + '-plot'
+	$('#' + plot_name).remove(); 
+ 	$('#' + container).append('<canvas id="'+plot_name+'"><canvas>');
+	var ctx = document.getElementById(plot_name).getContext("2d");
+    ctx.canvas.width = width;
+    ctx.canvas.height = height;
+    var bar_config = {
+    	type: 'horizontalBar',
+    	data: {
+    		labels: [],
+    		datasets: [{
+    			label: 'Metrics',
+    			data: [],
+    			backgroundColor: []
+    		}]
+    	},
+ 		options: {
+ 			responsive: false,
+            maintainAspectRatio: false,
+            animation: {
+           	 duration: 0 // general animation time
+	        },
+	        hover: {
+	            animationDuration: 0 // duration of animations when hovering an item
+	        },
+	        responsiveAnimationDuration: 0,
+	        events: [], //disable all mouse events - hover creates errors with custom colours on hover otherwise
+ 			title: {
+ 				display: true,
+ 				text: title
+ 			},
+ 			scales: {
+ 				xAxes: [{
+ 					ticks: {
+ 						max: 100,
+ 						min:0
+ 					}
+ 				}]
+ 			}
+ 		}
+    }
+
+	//push each dataset
+	//remember to add chartjs specific details
+	// data = {'occ' : 90, 'los eff': 55}
+	// subset = ['occ', 'los eff']
+	subset.forEach(function(el){
+		bar_config.data.labels.push(el)
+		var vals = data.map(function(res){return res[el]})
+		var sum = vals.reduce(function(acc, val) { return acc + val; }, 0)
+		var mean = sum / vals.length
+		if(el == "Mean total occupancy"){
+			var col = colourmap_gr(mean)	
+		} else {
+			var col = colourmap_rg(mean)	
+		}
+		bar_config.data.datasets[0].data.push(mean)
+		bar_config.data.datasets[0].backgroundColor.push(col)
+	})
+
+
+	//window.myLine = new Chart(ctx, scatter_config);
+    var myBarChart = new Chart(ctx, bar_config);	
+    return myBarChart;	
+}
+
+function colourmap_rg(val){
+	var v, r, g, b, a 
+	v = val/100
+	if(v <= 0.8){
+		r = 255
+	} else {
+		r = (1-v) * 255
+	}
+	g = v * 255
+	b = 60
+	a = 1
+	return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')'
+}
+
+function colourmap_gr(val){
+	var v, r, g, b, a
+	v = val/100
+	if(v <= 0.8){
+		g = 255
+	} else {
+		g = (1-v) * 255
+	}
+	r = v * 255
+	b = 60
+	a = 1
+	return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')'
+}

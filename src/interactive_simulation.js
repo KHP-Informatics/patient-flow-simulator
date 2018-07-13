@@ -297,6 +297,7 @@ function run(){
 	//performance between runs - must be after window.performance_history is updated
 	update_performance_history()
 	update_history_plot()
+	update_summary_plot(['Percent under 4h', 'Mean total occupancy', 'Length of stay efficiency', 'Staff time efficiency', 'Resource use efficiency'])
 
 	window.in_progress = false
 	return output_obj
@@ -354,12 +355,19 @@ function init_user_interface(patient_config, ward_config, graph_container){
 	//performance history plot
 	update_history_plot()
 
+	//update metrics summary plot
+	update_summary_plot([])
+
 }
 
 function update_history_plot(){
 	window.history_plot_selection = $('#history-plot-select').val()
-	plotSimulationHistory(window.performance_history, window.history_plot_selection, 'history-plot-container', 'history', 'Run number', window.history_plot_selection, 400, 400 )
+	plotSimulationHistory(window.performance_history, window.history_plot_selection, 'history-plot-container', 'History', 'Run number', window.history_plot_selection, 400, 400 )
 
+}
+
+function update_summary_plot(subset){
+	plotSimulationSummary(window.performance_history, subset, 'summary-plot-container', 'Average Performance', 'Metric' , '%', 600, 400 )
 }
 
 function show_resource_summary(){
