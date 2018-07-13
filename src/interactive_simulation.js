@@ -291,6 +291,7 @@ function run(){
 	summary['Staff time efficiency'] = summary['attention_efficiency']['efficiency']
 	summary['Resource use efficiency'] = summary['resource_efficiency']['efficiency']
 	summary['Total cost'] = summary['management']['total_cost']
+	summary['Score'] = total_score([summary['Length of stay efficiency'], summary['Staff time efficiency'], summary['Resource use efficiency'], summary['Percent under 4h']])
 	window.performance_history.push(summary)
 
 	//performance between runs - must be after window.performance_history is updated
@@ -696,7 +697,7 @@ function reset_when_run(){
 function clear_performance_history(){
 	window.performance_history = []
 	var tbl = '' 
-	tbl += '<thead><tr><th>Run</th><th>Under 4h (%)</th><th>Mean Emergency wait</th><th>Total occupancy (%)</th><th>Length of stay efficiency (%)</th><th>Resource efficiency (%)</th><th>Staff time efficiency (%)</th><th>Total Staff</th><th>Total capacity</th><th>Total resources</th><th>Total cost</th><th>Load</th></tr></thead>'
+	tbl += '<thead><tr><th>Run</th><th>Under 4h (%)</th><th>Mean Emergency wait</th><th>Total occupancy (%)</th><th>Length of stay efficiency (%)</th><th>Resource efficiency (%)</th><th>Staff time efficiency (%)</th><th>Total Staff</th><th>Total capacity</th><th>Total resources</th><th>Total cost</th><th>Score (%)</th><th>Load</th></tr></thead>'
 	tbl += '<tbody></tbody>'
 	$('#history-table').html(tbl)
 }
@@ -746,6 +747,11 @@ function update_performance_history(){
 	var c6 = row.insertCell(cn)
 	c6.innerText = dt.management.total_cost
 	cn += 1
+	
+	var c6 = row.insertCell(cn)
+	c6.innerText = dt['Score'].toFixed(2)
+	cn += 1
+
 	var c7 = row.insertCell(cn)
 	//c7.innerHTML = "<button onclick='load_previous_config(" + window.performance_history.length - 1 + ")'>Load</button>"
 	c7.innerHTML = "<button onclick='load_previous_config(" + run_num + ")'>Load</button>"
@@ -921,4 +927,17 @@ function set_prng_seed(seed){
 
 function get_prng_seed(){
 	return window.prng_seed
+}
+
+function total_score(metrics, format){
+	//returns the harmonic mean of all rate metrics
+	//by default will treat all metrics as percent values
+	//if format == "proportion" (all values 0-1) then the score is converted to a percent
+	var vals = metrics.map(function(x){return 1 / x})
+	var sum = vals.reduce(function(acc, val) { return acc + val; }, 0)
+	var score = (vals.length / sum) //length / sum is correct, harmonic mean is reciprocal
+	if(format == "proportion"){
+		score = score * 100
+	}
+	return score
 }
