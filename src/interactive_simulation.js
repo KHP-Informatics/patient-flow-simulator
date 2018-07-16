@@ -791,6 +791,38 @@ function download_previous_patients(){
 	download_patients(window.prev_result.patients, window.prev_result.creation_times)
 }
 
+//build up a patient set for a given number of runs with the current config
+function make_patient_preset(runs){
+	var patient_generator = new PatientGenerator(patient_config)
+	var patient_creation_times = {}
+	var start_time = 0
+	var end_time = start_time + (simulation_config.steps * runs)
+	var patients = []
+	var patient_count = patients.length
+	for (var time = start_time; time < end_time; time++) {
+		patient_creation_times[time] = []
+		var new_patients = patient_generator.get(time)
+			new_patients.forEach(function(np){
+			patients.push(np)
+			patient_creation_times[time].push(patient_count)
+			patient_count += 1
+		})
+	}
+	var config = export_patients(patients, patient_creation_times)
+	var config_text = JSON.stringify(config)
+	var blob = new Blob([config_text], {type: "text/plain;charset=utf-8"});
+	var fname = 'patient_set_' + runs.toString() + '.json.txt'
+	saveAs(blob, fname);
+	return config
+}
+
+function download_state(wards){
+	var state = dump_state(wards)
+	state = JSON.stringify(state)
+	var blob = new Blob([config_text], {type: "text/plain;charset=utf-8"});
+	saveAs(blob, 'ward_state.json.txt');
+}
+
 function preset_patients_set(){
 	return $('input[name=patient-mode-radios]:checked').val() == "preset"
 }
