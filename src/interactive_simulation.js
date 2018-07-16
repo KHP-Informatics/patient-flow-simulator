@@ -89,6 +89,7 @@ function run(){
 		var prev_pt_set = export_patients(window.prev_result.patients, window.prev_result.creation_times)
 		var patient_generator = new PresetPatientGenerator(prev_pt_set)
 	} else {
+		//generating new patients
 		var patient_generator = new PatientGenerator(patient_config)
 	}
 	
