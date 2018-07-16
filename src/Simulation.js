@@ -756,3 +756,34 @@ function deepClone(obj, hash = new WeakMap()) {
     return Object.assign(result, ...Object.keys(obj).map (
         key => ({ [key]: deepClone(obj[key], hash) }) ));
 }
+
+
+//dump the state of all wards
+function dump_state(wards){
+	var ward_patients = {}
+	var ward_names = Object.keys(wards)
+	ward_names.forEach(function(el){
+		ward_patients[el] = []
+		wards[el].admitted.forEach(function(p){
+			var clone = deepClone(p)
+			var keys = Object.keys(clone)
+			keys.forEach(function(k){
+				if(clone[k] instanceof Function || clone[k] instanceof Ward){
+					delete clone[k]
+				}
+			})
+			ward_patients[el].push(clone)
+		})
+	})
+	return ward_patients
+}
+
+//reload the a saved state
+//not implemented yet - code should also be moved to interactive_simulation.js
+function load_state(wards, state){
+	var ward_names = Object.keys
+	ward_names.forEach(function(el){
+
+	})
+}
+
