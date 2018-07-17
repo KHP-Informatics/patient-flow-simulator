@@ -59,3 +59,11 @@ a {
 .form-check-input {
   margin-top: 0;
 }
+
+.bg-blue {
+  background-color: #337ab7;
+}
+
+.row-margin {
+  margin-top: 10px;
+}
