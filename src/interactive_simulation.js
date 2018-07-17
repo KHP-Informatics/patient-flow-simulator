@@ -692,7 +692,7 @@ function delay_table(patients){
 	var delays = delayed_by(patients)
 	var wards = _.keys(delays.total)
 	var tbl = '' 
-	tbl += '<thead><tr><th>Ward</th><th>Attention delays (count)</th><th>Attention delays (prop)</th><th>Resource delays (count)</th><th>Resource delays (prop)</th></tr></thead>'
+	tbl += '<thead><tr><th>Ward</th><th>Delayed by staff shortage (count)</th><th>Delayed by staff shortage (prop)</th><th>Delayed by resource shortage (count)</th><th>Delayed by resource shortage (prop)</th></tr></thead>'
 	tbl += '<tbody>'
 	for (var i = 0; i < wards.length; i++) {
 		var w = wards[i]
