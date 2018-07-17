@@ -7,7 +7,6 @@ window.performance_history = []
 window.runner = false
 window.is_running = false
 window.history_plot_selection = ""
-window.emergency_board_after = 8 //how many stesp to let patients wait in ED before trying to board them
 function run(){
 	save_patient_changes() //get changes to configuration from editor
 	save_simulation_changes()
@@ -214,7 +213,7 @@ function run(){
 			if(el == "Emergency"){
 				//for the emergency ward, only board after very long waits
 				var to_move = wards[el].admitted.filter(function(p){
-					var long_wait = (time - p.last_move_time) > window.emergency_board_after
+					var long_wait = (time - p.last_move_time) > wards[el].begin_boarding_after
 					return p.can_move && long_wait
 				})
 			} else {
