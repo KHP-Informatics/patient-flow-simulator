@@ -162,8 +162,11 @@
 
           <button class="btn btn-success" type="button"  id="run-multi-btn" onclick="toggle_running_state()"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Run</button>
           <button class="btn btn-success" type="button" id="run-once-btn" onclick="run()">Run once</button>
+          <br />
             <button id="change-hospital-btn" class="btn btn-primary" data-toggle="modal" data-target="#change-hospital-modal">Change hospital</button>
   <button id="download-btn" class="btn btn-primary" onclick="download_current_config()" >Download config</button>
+  <br/>
+  <button class="btn btn-warning" onclick="new_simulator_session(patient_config, ward_config, 'cy')">Reset analysis</button>
         </div>
       </div>
       </div>
@@ -471,7 +474,7 @@
   <script type="text/javascript" src="src/plot.js"></script>
       
   <script type="text/javascript">
-    init_user_interface(patient_config, ward_config, 'cy')
+    new_simulator_session(patient_config, ward_config, 'cy')
     prng_seed = Math.random().toString()
     //Math.seedrandom('hello.');
     set_prng_seed(prng_seed) //also updates window.prng_seed

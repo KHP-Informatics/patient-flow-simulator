@@ -1,14 +1,12 @@
 // interact with GUI to control simulation
 //wards are defined by ward_config.js
 "use strict";
-window.run_number = 0;
-window.prev_result = {};
-window.performance_history = []
-window.runner = false
-window.is_running = false
-window.history_plot_selection = ""
-window.preset_run_limit = 30
+
 function run(){
+	if(!window.simulator_session_started){
+		console.log("session not started")
+		return
+	}
 	save_patient_changes() //get changes to configuration from editor
 	save_simulation_changes()
 	default_simulation_summary()
@@ -370,6 +368,21 @@ function init_user_interface(patient_config, ward_config, graph_container){
 	update_summary_plot([])
 
 }
+
+//set up GLOBALS for simulator history tracking and some general params
+//doesn't clear management configs but passes them to init_user_interface
+function new_simulator_session(patient_config, ward_config, graph_container){
+	window.run_number = 0;
+	window.prev_result = {};
+	window.performance_history = []
+	window.runner = false
+	window.is_running = false
+	window.history_plot_selection = ""
+	window.preset_run_limit = 30
+	window.simulator_session_started = true
+	init_user_interface(patient_config, ward_config, graph_container)
+}
+
 
 function update_history_plot(){
 	window.history_plot_selection = $('#history-plot-select').val()
