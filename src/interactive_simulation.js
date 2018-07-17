@@ -858,9 +858,10 @@ function toggle_running_state(){
 		$('#simulation-seconds-per-run').prop('disabled', true)
 		clearInterval(window.runner)
 		window.is_running = false
-		while(window.in_progress){
-			console.log('.')
-		}
+		//the below does not work because the main loop can crash before in_progress is changed, meaning this just hangs the pause process indefinitely
+		// while(window.in_progress){
+		// 	console.log('.')
+		// }
 		$('#run-once-btn').prop('disabled', false)
 		$('#run-multi-btn').prop('disabled', false)
 		$('#simulation-seconds-per-run').prop('disabled', false)
