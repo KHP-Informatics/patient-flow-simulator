@@ -796,7 +796,10 @@ function download_previous_patients(){
 
 //build up a patient set for a given number of runs with the current config
 function make_patient_preset(runs){
-	var patient_generator = new PatientGenerator(patient_config)
+	//clone config because we need to remove limit on number of patients
+	var pt_conf = deepClone(patient_config)
+	pt_conf.max_patients = Infinity
+	var patient_generator = new PatientGenerator(pt_conf)
 	var patient_creation_times = {}
 	var start_time = 0
 	var end_time = start_time + (simulation_config.steps * runs)
