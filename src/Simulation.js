@@ -545,6 +545,7 @@ function PresetPatientGenerator(config){
 	this.patients_created = 0
 	this.current_time_idx = 0
 	this.creation_times = _.keys(config).map(Number).sort(sortNumber)
+	this.last_time = this.creation_times[this.creation_times.length-1]
 
 	this.get = function(now){
 		//call repeatedly to iterate through creation times in order

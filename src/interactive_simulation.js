@@ -87,6 +87,14 @@ function run(){
 	
 	if(preset_patients){
 		var patient_generator = new PresetPatientGenerator(patientset)
+		if(patient_generator.last_time < start_time){
+			alert("You have reached the end of the preset patients")
+			if(window.is_running){
+				toggle_running_state()
+			}
+			return
+
+		}
 	} else if(reset_results == "repeat"){
 		var prev_pt_set = export_patients(window.prev_result.patients, window.prev_result.creation_times)
 		var patient_generator = new PresetPatientGenerator(prev_pt_set)
