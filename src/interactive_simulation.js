@@ -72,7 +72,9 @@ function run(){
 		virtual_wards.forEach(function(el){
 			ward_names.push(el.name)
 		})
-		start_time = window.prev_result.end_time + 1 //needed so times work out for patients still in hospital
+		//needed so times work out for patients still in hospital
+		//NOT end_time + 1, end_time is the next step to run
+		start_time = window.prev_result.end_time 
 		
 	}
 
