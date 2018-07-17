@@ -383,6 +383,14 @@ function new_simulator_session(patient_config, ward_config, graph_container){
 	init_user_interface(patient_config, ward_config, graph_container)
 }
 
+function reset_interactive(patient_config, ward_config, graph_container){
+	var check = confirm("Are you sure you want to reset?")
+	if(check){
+		new_simulator_session(patient_config, ward_config, 'cy')
+	}
+}
+
+
 
 function update_history_plot(){
 	window.history_plot_selection = $('#history-plot-select').val()
