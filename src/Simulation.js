@@ -554,11 +554,13 @@ function PresetPatientGenerator(config){
 			now = this.creation_times[this.current_time_idx]
 			this.current_time_idx += 1
 		}
-		this.time_to_patients[now].forEach(function(el){
-			np = new Patient(el)
-			created.push(np)
-			this.patients_created += 1
-		})
+		if(this.time_to_patients.hasOwnProperty(now)){
+			this.time_to_patients[now].forEach(function(el){
+				np = new Patient(el)
+				created.push(np)
+				this.patients_created += 1
+			})
+		}
 
 		return created
 	}
