@@ -7,6 +7,7 @@ window.performance_history = []
 window.runner = false
 window.is_running = false
 window.history_plot_selection = ""
+window.preset_run_limit = 30
 function run(){
 	save_patient_changes() //get changes to configuration from editor
 	save_simulation_changes()
@@ -86,7 +87,7 @@ function run(){
 	
 	if(preset_patients){
 		var patient_generator = new PresetPatientGenerator(patientset)
-		if(patient_generator.last_time < start_time){
+		if(patient_generator.last_time < start_time || window.run_number > window.preset_run_limit){
 			alert("You have reached the end of the preset patients")
 			if(window.is_running){
 				toggle_running_state()
