@@ -198,7 +198,11 @@ function buildTransferGraph(patients, wards, container, admitted_only){
 	if(admitted_only){
 		s_id = name_to_id['Emergency']
 		t_id = name_to_id['Exit']
-		weights_ST[s_id][t_id] = 0
+		if(weights_ST.hasOwnProperty(s_id)){
+			if(weights_ST[s_id].hasOwnProperty(t_id)){
+				weights_ST[s_id][t_id] = 0	
+			}
+		}
 	}
 	//normalise to proportion of all transfers then scale to range 0-1
 	//scaling to range 0-1 means that (at least) one edge will be the max size defined in the cytoscape css config
