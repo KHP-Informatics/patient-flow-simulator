@@ -67,3 +67,7 @@ a {
 .row-margin {
   margin-top: 10px;
 }
+
+.btn-margin {
+  margin: 5px;
+}

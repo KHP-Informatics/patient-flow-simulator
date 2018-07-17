@@ -224,21 +224,21 @@
 
             <div class="row row-margin">
               <div class="col-md-6">
-                <button id="change-hospital-btn" class="btn btn-info" data-toggle="modal" data-target="#change-hospital-modal">Change hospital</button>
-  <button id="download-btn" class="btn btn-info" onclick="download_current_config()" >Download config</button>
+                <button id="change-hospital-btn" class="btn btn-info btn-margin" data-toggle="modal" data-target="#change-hospital-modal">Change hospital</button>
+  <button id="download-btn" class="btn btn-info btn-margin" onclick="download_current_config()" >Download config</button>
               </div>
               <div class="col-md-6">
-                <button class="btn btn-warning" onclick="new_simulator_session(patient_config, ward_config, 'cy')">Reset analysis</button>
+                <button class="btn btn-warning btn-margin" onclick="reset_interactive(patient_config, ward_config, 'cy')">Reset analysis</button>
               </div>
             </div>
             
             <div class="row row-margin">
               <div class="col-md-6">
-                <button class="btn btn-success btn-block" type="button"  id="run-multi-btn" onclick="toggle_running_state()"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Run</button>
+                <button class="btn btn-success btn-block btn-margin" type="button"  id="run-multi-btn" onclick="toggle_running_state()"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Run</button>
               </div>
 
               <div class="col-md-6">
-                <button class="btn btn-success btn-block" type="button" id="run-once-btn" onclick="run()">Run once</button> 
+                <button class="btn btn-success btn-block btn-margin" type="button" id="run-once-btn" onclick="run()">Run once</button> 
               </div>
              
             </div>
