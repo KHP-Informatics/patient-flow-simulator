@@ -51,3 +51,11 @@ body {
 .hidden {
   display:none;
 }
+
+a {
+  color: #337ab7;
+}
+
+.form-check-input {
+  margin-top: 0;
+}

@@ -7,9 +7,8 @@
     <!-- <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui"> -->
 
   <meta name="description" content="Hospital flow simulator" />
-
+  <link rel="stylesheet" type="text/css" href="src/lib/bootstrap-4.1.2-dist/css/bootstrap.min.css">
   <link href="css/style.css" rel="stylesheet" />
-  <link rel="stylesheet" type="text/css" href="src/lib/bootstrap-3.3.7-dist/css/bootstrap.min.css">
   <title>Hospital flow simulation</title>
   <script src="src/lib/seedrandom.min.js"></script>
   <script src="src/lib/Chart.bundle.min.js"></script>
@@ -49,41 +48,41 @@
 </head>
   
 <body>
-<center><h1>Patient Flow Simulator</h1></center>
-<center><h2><small><a href="./index.html">Simulator</a>  |  <a href="./docs.html">Help</a>  |  <a href="./developer.html">Developer</a>  |  <a href="./about.html">About</a></small></h2></center>
+<center><h1 class="display-3">Patient Flow Simulator</h1></center>
+<center><h4><a href="./index.html">Simulator</a>  |  <a href="./docs.html">Help</a>  |  <a href="./developer.html">Developer</a>  |  <a href="./about.html">About</a></h2></center>
 <hr />
   <div class="container-fluid" id="editor">
   <h3>Ward management</h3>
   <p>Distribute resources in your hospital and make policy decisions. Then click Run!</p>
     <div class="row" id="config-editor">
       <div class="col-md-4">
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <h3 class="panel-title">Ward list</h3>
-          </div>
-          <div class="panel-body" id="ward-list-container">
+        <div class="card card-default">
+           <h5 class="card-header">Ward list</h5>
+          <div class="card-body" id="ward-list-container">
+            
             <div class="list-group" id="ward-list">
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <h3 class="panel-title" id="selected-ward-name">Select a ward to edit</h3>
-          </div>
-          <div class="panel-body" id="ward-edit-content">
+        <div class="card card-default">
+          <h5 class="card-header" id="selected-ward-name">Select a ward to edit</h5>
+          <div class="card-body" id="ward-edit-content">
             <input type="hidden" name="selected-ward" id="selected-ward" value="">
-
+<div class="form-group">
             <label for="ward-capacity">Capacity</label>
             <input type="text" min="1" class="form-control" id="ward-capacity">
-
+</div>
+<div class="form-group">
             <label for="ward-resources">Resources</label>
             <input type="text" min="1" class="form-control" id="ward-resources">
-
+</div>
+<div class="form-group">
             <label for="ward-resources">Staff</label>
             <input type="text" min="1" class="form-control" id="ward-attention">
-
+</div>
+<div class="form-group">
             <label for="ward-resource-policy">Resource policy</label>
             <select class="form-control" id="ward-resource-policy">
               <option value="divide_evenly">Equal</option>
@@ -91,24 +90,28 @@
               <option value="highest_first">Biased highest first</option>
               <option value="lowest_first">Lowest first</option>
             </select>
-
+</div>
+<div class="form-group">
             <label for="ward-queue-policy">Queue policy</label>
             <select class="form-control" id="ward-queue-policy">
               <option value="SimpleQueue">First-come, first-served</option>
               <option value="MaxPQ">Highest need first</option>
               <option value="MinPQ">Lowest need first</option>
             </select>
-
+</div>
+<div class="form-group">
             <label for="ward-overflow-policy">Accept overflow</label>
             <select class="form-control" id="ward-overflow-policy">
               <option value="always">Always</option>
               <option value="never">Never</option>
             </select>
-
+          </div>
+<div class="form-group">
             <div id='board-from-container' class='hidden'>
               <label for="ward-board-from">Begin boarding after</label>
             <input type="text" min="1" class="form-control" id="ward-board-from">
             </div>
+          </div>
 
             <button class="btn btn-primary" type="button" id="save-ward-changes" onclick="save_ward_changes()">Save</button>
 
@@ -116,61 +119,121 @@
         </div>
       </div>
       <div class="col-md-4">
-      <div class="panel panel-default">
-          <div class="panel-heading">
-          <h3 class="panel-title">Simulation setup</h3>
-        </div>
-        <div class="panel-body" id="simulation-edit-content">
-
+      <div class="card card-default">
+          <h5 class="card-header">Simulation setup</h5>
+        <div class="card-body" id="simulation-edit-content">
+            <div class="form-group">
             <label for="simulation-steps">Simulation steps</label>
             <input type="text" min="1" class="form-control" id="simulation-steps">
-
+          </div>
+          <div class="form-group">
             <label for="patient-creation-limit">Max patients</label>
             <input type="text" min="1" class="form-control" id="patient-creation-limit">
-
+</div>
+<div class="form-group">
             <label for="patient-batch-min">Min arrivals per step</label>
             <input type="text" min="1" class="form-control" id="patient-batch-min">
+            </div>
+            <div class="form-group">
             <label for="patient-batch-min">Expected arrivals per step</label>
             <input type="text" min="1" class="form-control" id="patient-batch-lambda">
-
+</div>
+<div class="form-group">
             <label for="patient-batch-max">Max arrivals per step</label>
             <input type="text" min="1" class="form-control" id="patient-batch-max">
-
+</div>
+<div class="form-group">
             <label for="simulation-emergency-target">Emergency wait target</label>
             <input type="text" min="1" class="form-control" id="simulation-emergency-target">
-
+</div>
+<div class="form-group">
             <label for="simulation-seconds-per-run">Wait between runs (s)</label>
-            <small id="sim-s-per-help" class="form-text text-muted">Less powerful machines may need longer per iteration.</small>
             <input type="number" min="1" class="form-control" id="simulation-seconds-per-run" value="2">
-            
+            <small id="sim-s-per-help" class="form-text text-muted">Less powerful machines may need longer per iteration.</small>
+
+            </div>
             <div>
               Simulation history:
+              <div class="form-check">
               <input class="form-check-input" type="radio" name="resume-mode-radios" id="reset-sim-toggle" value="reset">
               <label class="form-check-label" for="reset-sim-toggle">Clean slate</label>
+              </div>
+              <div class="form-check">
               <input class="form-check-input" type="radio" name="resume-mode-radios" id="continue-sim-toggle" value="resume" checked>
               <label class="form-check-label" for="continue-sim-toggle">Resume</label>
+              </div>
+              <div class="form-check">
               <input class="form-check-input" type="radio" name="resume-mode-radios" id="repeat-sim-toggle" value="repeat">
               <label class="form-check-label" for="repeat-sim-toggle">Repeat previous</label>
             </div>
+            </div>
+            <br/>
             <div>
               Patients:
+              <div class="form-check">
               <input class="form-check-input" type="radio" name="patient-mode-radios" id="random-patients-toggle" value="random" checked>
               <label class="form-check-label" for="reset-sim-toggle">Generate</label>
+              </div>
+              <div class="form-check">
               <input class="form-check-input" type="radio" name="patient-mode-radios" id="load-patients-toggle" value="preset">
               <label class="form-check-label" for="continue-sim-toggle">Preset</label>
             </div>
-
-          <button class="btn btn-success" type="button"  id="run-multi-btn" onclick="toggle_running_state()"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Run</button>
-          <button class="btn btn-success" type="button" id="run-once-btn" onclick="run()">Run once</button>
-          <br />
-            <button id="change-hospital-btn" class="btn btn-primary" data-toggle="modal" data-target="#change-hospital-modal">Change hospital</button>
-  <button id="download-btn" class="btn btn-primary" onclick="download_current_config()" >Download config</button>
-  <br/>
-  <button class="btn btn-warning" onclick="new_simulator_session(patient_config, ward_config, 'cy')">Reset analysis</button>
+            </div>
+            <div>
+<!--               <fieldset class="form-group">
+                <div class="row">
+                  <legend class="col-form-label col-sm-3 pt-0">History</legend>
+                  <div class="col-sm-9">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="resume-mode-radios" id="reset-sim-toggle" value="reset">
+              <label class="form-check-label" for="reset-sim-toggle">Clean slate</label>
+                        
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="resume-mode-radios" id="continue-sim-toggle" value="resume" checked>
+              <label class="form-check-label" for="continue-sim-toggle">Resume</label>
+                        
+                    </div>
+                    <div class="form-check disabled">
+                      <input class="form-check-input" type="radio" name="resume-mode-radios" id="repeat-sim-toggle" value="repeat">
+              <label class="form-check-label" for="repeat-sim-toggle">Repeat previous</label>
+                        
+                    </div>
+                  </div>
+                </div>
+              </fieldset> -->
+            </div>
         </div>
       </div>
       </div>
     </div>
+  </div>
+<hr />
+    <div class="row" id="sim-controls">
+      <div class="col-md-6 offset-md-3">
+        <div class="card card-default">
+          <h5 class="card-header">Simulation controls</h5>
+          <div class="card-body" id="sim-controls-container">
+            <div>
+              Start and stop the simulation:
+              <button class="btn btn-success" type="button"  id="run-multi-btn" onclick="toggle_running_state()"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Run</button>
+              <button class="btn btn-success" type="button" id="run-once-btn" onclick="run()">Run once</button>
+            </div>
+            <br/>
+            <div>
+              Reset simulation results:
+                <button class="btn btn-warning" onclick="new_simulator_session(patient_config, ward_config, 'cy')">Reset analysis</button>
+            </div>
+            <br/>
+            <div>
+              Save or upload settings:
+              <button id="change-hospital-btn" class="btn btn-info" data-toggle="modal" data-target="#change-hospital-modal">Change hospital</button>
+  <button id="download-btn" class="btn btn-info" onclick="download_current_config()" >Download config</button>
+            </div>
+            
+          </div>
+        </div>
+      </div>
 
   </div> <!-- end of editor container -->
 
@@ -180,37 +243,36 @@
   <hr />
   <h3>Analysis</h3>
   <p>Find out how well your hospital is performing.</p>
-  <ul class="nav nav-tabs">
-    <li role="presentation" class="active"><a href="#summary-tab" data-toggle="tab">Summary</a></li>
-    <li role="presentation"><a href="#history-tab" data-toggle="tab">History</a></li> 
-    <li role="presentation"><a href="#network-tab" data-toggle="tab" id="network-tab-link">Network</a></li>
-    <li role="presentation"><a href="#waiting-tab" data-toggle="tab">Waiting time</a></li>
-    <li role="presentation"><a href="#occupancy-tab" data-toggle="tab">Occupancy</a></li>
-    <li role="presentation"><a href="#top-paths-tab" data-toggle="tab">Top paths</a></li>
-    <li role="presentation"><a href="#path-distribution-tab" data-toggle="tab">Path length</a></li>
-    <li role="presentation"><a href="#queue-tab" data-toggle="tab">Queue length</a></li>
-    <li role="presentation"><a href="#delay-tab" data-toggle="tab">Delays</a></li>
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item"><a href="#summary-tab" class="nav-link active" data-toggle="tab" role="tab">Summary</a></li>
+    <li class="nav-item"><a href="#history-tab" class="nav-link" data-toggle="tab" role="tab">History</a></li> 
+    <li class="nav-item"><a href="#network-tab" class="nav-link" data-toggle="tab" role="tab">Network</a></li>
+    <li class="nav-item"><a href="#waiting-tab" class="nav-link" data-toggle="tab" role="tab">Waiting time</a></li>
+    <li class="nav-item"><a href="#occupancy-tab" class="nav-link" data-toggle="tab" role="tab">Occupancy</a></li>
+    <li class="nav-item"><a href="#top-paths-tab" class="nav-link" data-toggle="tab" role="tab">Top paths</a></li>
+    <li class="nav-item"><a href="#path-distribution-tab" class="nav-link" data-toggle="tab" role="tab">Path length</a></li>
+    <li class="nav-item"><a href="#queue-tab" class="nav-link" data-toggle="tab" role="tab">Queue length</a></li>
+    <li class="nav-item"><a href="#delay-tab" class="nav-link" data-toggle="tab" role="tab">Delays</a></li>
   </ul>
   </div> 
 
 
   <!-- Tab panes -->
   <div class="tab-content">
-    <div role="tabpanel" class="tab-pane active" id="summary-tab">
+    <div class="tab-pane fade show active" role="tabpanel" id="summary-tab">
     <!-- help text -->
-      <div class="panel panel-primary panel-help">
-        <div class="panel-heading">
-          <h3 class="panel-title">Summary statistics</h3>
-        </div>
-        <div class="panel-body">
-          Overall properties of the hospital and any simulated patients. If there are still patients in the hospital when the simulation ends, consider increasing the number of steps.
-        </div>
-      </div>
+<div class="card mb-3" style="max-width: 30rem;">
+  <div class="card-header bg-info text-white">Help</div>
+  <div class="card-body">
+    <h5 class="card-title">Summary statistics</h5>
+    <p class="card-text">Overall properties of the hospital and any simulated patients. If there are still patients in the hospital when the simulation ends, consider increasing the number of steps.</p>
+  </div>
+</div>
       
 
-      <div class="panel panel-default" id="resource-summary">
-        <!-- Default panel contents -->
-        <div class="panel-heading">Hospital summary</div>
+      <div class="card card-default" id="resource-summary">
+        <!-- Default card contents -->
+        <h5 class="card-header">Hospital summary</h5>
 
         <!-- List group -->
         <ul class="list-group">
@@ -224,9 +286,9 @@
         </ul>
       </div>
 
-      <div class="panel panel-default" id="performance-summary">
-        <!-- Default panel contents -->
-        <div class="panel-heading">Performance summary</div>
+      <div class="card card-default" id="performance-summary">
+        <!-- Default card contents -->
+        <h5 class="card-header">Performance summary</h5>
 
         <!-- List group -->
         <ul class="list-group">
@@ -237,9 +299,9 @@
       </div>
 
 
-      <div class="panel panel-default" id="simulation-summary">
-        <!-- Default panel contents -->
-        <div class="panel-heading">Patient summary</div>
+      <div class="card card-default" id="simulation-summary">
+        <!-- Default card contents -->
+        <h5 class="card-header">Patient summary</h5>
         <!-- List group -->
         <ul class="list-group">
         <li class="list-group-item">Simulation complete: <div class="inline" id="simulation-complete"></div></li>
@@ -256,18 +318,17 @@
 
     </div>
 
-    <div role="tabpanel" class="tab-pane" id="network-tab">
+    <div class="tab-pane fade show" role="tabpanel" aria-labelledby="network-tab-link"id="network-tab">
         <div id="networkcontainer">
         <!-- help text -->
-          <div class="panel panel-primary panel-help">
-            <div class="panel-heading">
-              <h3 class="panel-title">The patient flow network</h3>
-            </div>
-            <div class="panel-body">
-              Nodes represent wards and directed edges represent the movement of patients between wards. Edge weight (thickness) is the relative proportion of all transfers that
-              went through each edge. Use the analysis buttons below to scale node size based on centrality.
-            </div>
-          </div>
+<div class="card mb-3" style="max-width: 30rem;">
+  <div class="card-header bg-info text-white">Help</div>
+  <div class="card-body">
+    <h5 class="card-title">The patient flow network</h5>
+    <p class="card-text">Nodes represent wards and directed edges represent the movement of patients between wards. Edge weight (thickness) is the relative proportion of all transfers that went through each edge. Use the analysis buttons below to scale node size based on centrality.</p>
+  </div>
+</div>
+
         <div id="network-controls">
             <h4>Network analysis</h4>
             <button class="btn btn-primary" onclick="cy.fit()">Reset view</button>
@@ -284,17 +345,16 @@
         
     </div>
 
-    <div role="tabpanel" class="tab-pane" id="waiting-tab">
+    <div role="tabcard" class="tab-pane" id="waiting-tab">
       <div id="performance-charts">
       <!-- help text -->
-          <div class="panel panel-primary panel-help">
-            <div class="panel-heading">
-              <h3 class="panel-title">Emergency performance</h3>
-            </div>
-            <div class="panel-body">
-              Analyse the distribution of length of stay in any ward, including emergency department waiting time.
-            </div>
-          </div>
+          <div class="card mb-3" style="max-width: 30rem;">
+  <div class="card-header bg-info text-white">Help</div>
+  <div class="card-body">
+    <h5 class="card-title">Emergency performance</h5>
+    <p class="card-text">Analyse the distribution of length of stay in any ward, including emergency department waiting time.</p>
+  </div>
+</div>
 
           <select id="wait-plot-list"></select>
           <button class="btn btn-default" onclick="select_wait_plot_ward()">Select</button>
@@ -306,15 +366,15 @@
         </div>
     </div>
 
-    <div role="tabpanel" class="tab-pane" id="occupancy-tab">
-          <div class="panel panel-primary panel-help">
-            <div class="panel-heading">
-              <h3 class="panel-title">Ward occupancy</h3>
-            </div>
-            <div class="panel-body">
-              Analyse the occupancy of all wards over time. Click the legend to show/hide wards. 
-            </div>
-          </div>
+    <div role="tabcard" class="tab-pane" id="occupancy-tab">
+          
+          <div class="card mb-3" style="max-width: 30rem;">
+  <div class="card-header bg-info text-white">Help</div>
+  <div class="card-body">
+    <h5 class="card-title">Ward occupancy</h5>
+    <p class="card-text">Analyse the occupancy of all wards over time. Occupancy is shown as the % of beds in use per ward. Click the lengend to show/hide wards.</p>
+  </div>
+</div>
 
       <div class="plotcontainer" id="occupancy">
       <canvas id="occupancy-plot" class="plot"></canvas> 
@@ -322,19 +382,18 @@
       </div>
     </div>
 
-    <div role="tabpanel" class="tab-pane" id="top-paths-tab">
+    <div role="tabcard" class="tab-pane" id="top-paths-tab">
       <!-- help text -->
-      <div class="panel panel-primary panel-help">
-        <div class="panel-heading">
-          <h3 class="panel-title">Observed paths</h3>
-        </div>
-        <div class="panel-body">
-          Analyse the actual paths taken by patients through your hospital. 
-        </div>
-      </div>
+<div class="card mb-3" style="max-width: 30rem;">
+  <div class="card-header bg-info text-white">Help</div>
+  <div class="card-body">
+    <h5 class="card-title">Observed paths</h5>
+    <p class="card-text">Analyse the actual paths patients take through your hosptial.</p>
+  </div>
+</div>
     
-      <div class="panel panel-default">
-        <div class="panel-heading">Most common paths</div>
+      <div class="card card-default">
+        <h5 class="card-header">Most common paths</h5>
 
         <!-- Table -->
         <table class="table table-bordered" id="top-paths-list"></table>
@@ -342,15 +401,14 @@
 
     </div>
 
-    <div role="tabpanel" class="tab-pane" id="path-distribution-tab">
-      <div class="panel panel-primary panel-help">
-        <div class="panel-heading">
-          <h3 class="panel-title">Path length</h3>
-        </div>
-        <div class="panel-body">
-          Analyse the frequency of paths by length. 
-        </div>
-      </div>
+    <div role="tabcard" class="tab-pane" id="path-distribution-tab">
+<div class="card mb-3" style="max-width: 30rem;">
+  <div class="card-header bg-info text-white">Help</div>
+  <div class="card-body">
+    <h5 class="card-title">Path length</h5>
+    <p class="card-text">Analyse the frequency of paths by length</p>
+  </div>
+</div>
 
       <div class="plotcontainer" id="path-length">
       <canvas id="path-length-plot" class="plot"></canvas>
@@ -358,46 +416,43 @@
       </div>
     </div>
 
-    <div role="tabpanel" class="tab-pane" id="queue-tab">
-          <div class="panel panel-primary panel-help">
-            <div class="panel-heading">
-              <h3 class="panel-title">Ward queue length</h3>
-            </div>
-            <div class="panel-body">
-              Analyse the number of patients waiting for admission to each ward over time. Click the legend to show/hide wards. 
-            </div>
-          </div>
-
+    <div role="tabcard" class="tab-pane" id="queue-tab">
+<div class="card mb-3" style="max-width: 30rem;">
+  <div class="card-header bg-info text-white">Help</div>
+  <div class="card-body">
+    <h5 class="card-title">Ward queue length</h5>
+    <p class="card-text">Analyse the number of patients waiting for admission to each ward over time. Click the lengend to show/hide wards.</p>
+  </div>
+</div>
       <div class="plotcontainer" id="queues">
       <canvas id="queues-plot" class="plot"></canvas> 
       <!-- canvas element will be deleted in JS and created with this ID -->
       </div>
     </div>
 
-    <div role="tabpanel" class="tab-pane" id="delay-tab">
-          <div class="panel panel-primary panel-help">
-            <div class="panel-heading">
-              <h3 class="panel-title">Causes of delay</h3>
-            </div>
-            <div class="panel-body">
-              Delays that arise within wards may be due to shortage of staff or resources.
-            </div>
-          </div>
+    <div role="tabcard" class="tab-pane" id="delay-tab">
+<div class="card mb-3" style="max-width: 30rem;">
+  <div class="card-header bg-info text-white">Help</div>
+  <div class="card-body">
+    <h5 class="card-title">Causes of delay</h5>
+    <p class="card-text">Delays that arise within wards might be due to a shortage of staff or resources.</p>
+  </div>
+</div>
 
       <div id="delay-table-container">
         <table class="table table-bordered" id="delay-table"></table>
       </div>
     </div>
 
-    <div role="tabpanel" class="tab-pane" id="history-tab">
-          <div class="panel panel-primary panel-help">
-            <div class="panel-heading">
-              <h3 class="panel-title">Simulation history</h3>
-            </div>
-            <div class="panel-body">
-              Monitor the performance of your hospital over consecutive simulations. You can reload any previous configuration from the history table. Note that as occupancy only counts admitted patients, the Emergency ward is not included. 
-            </div>
-          </div>
+    <div role="tabcard" class="tab-pane" id="history-tab">
+<div class="card mb-3" style="max-width: 30rem;">
+  <div class="card-header bg-info text-white">Help</div>
+  <div class="card-body">
+    <h5 class="card-title">Simulation history</h5>
+    <p class="card-text">Monitor the performance of your hospital over consecutive simulations. You can reload any previous configuration from the history table. Note that as occupancy only counts admitted patients, the Emergency ward is not included.</p>
+  </div>
+</div>
+
           <div class="row">
             <div class="col-md-6">
               <select id='history-plot-select'>
@@ -410,7 +465,7 @@
                 <option value='Total cost'>Total cost</option>
                 <option value='Score'>Score</option>
               </select>
-              <button class="btn btn-default" onclick="update_history_plot()">Plot</button>
+              <button class="btn btn-primary" onclick="update_history_plot()">Plot</button>
               <div id='history-plot-container'></div>
             </div>
             <div class="col-md-6">
@@ -433,11 +488,13 @@
 
 <!-- Modal -->
 <div class="modal fade" id="change-hospital-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title" id="myModalLabel">Change to a different hospital</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
       <div class="modal-body">
 
@@ -470,7 +527,7 @@
 
 
   <script type="text/javascript" src="src/lib/jquery-3.1.1.min.js"></script>
-    <script type="text/javascript" src="src/lib/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="src/lib/bootstrap-4.1.2-dist/js/bootstrap.min.js"></script>
   <script type="text/javascript" src="src/plot.js"></script>
       
   <script type="text/javascript">
