@@ -325,11 +325,20 @@ function run(){
 
 	window.in_progress = false
 	set_progress('100%')
-	set_run_status('Simulator: Done')
-	window.setTimeout(function(){
-		set_progress('0%')
-		set_run_status('Simulator: Ready')
-	},progress_reset_wait)
+	if(window.runner == false){
+		set_run_status('Simulator: Done')
+		window.setTimeout(function(){
+			set_progress('0%')
+			set_run_status('Simulator: Ready')
+		},progress_reset_wait)
+	} else {
+		set_run_status('Simulator: Run done')
+		window.setTimeout(function(){
+			set_progress('0%')
+			set_run_status('Simulator: Preparing next run')
+		},progress_reset_wait)
+	}
+	
 	return output_obj
 }
 
@@ -917,6 +926,7 @@ function toggle_running_state(){
 		$('#run-multi-btn').prop('disabled', true)
 		$('#simulation-seconds-per-run').prop('disabled', true)
 		clearInterval(window.runner)
+		window.runner = false
 		window.is_running = false
 		//the below does not work because the main loop can crash before in_progress is changed, meaning this just hangs the pause process indefinitely
 		// while(window.in_progress){
@@ -926,6 +936,11 @@ function toggle_running_state(){
 		$('#run-multi-btn').prop('disabled', false)
 		$('#simulation-seconds-per-run').prop('disabled', false)
 		$('#run-multi-btn').removeClass('btn-danger').addClass('btn-success').html('<span class="glyphicon glyphicon-play" aria-hidden="true"></span> Run')
+		set_run_status('Simulator: Waiting for run to complete')
+		window.setTimeout(function(){
+			set_progress('0%')
+			set_run_status('Simulator: Ready')
+		},1000)
 	} else {
 		//start running
 		var interval_time = parseFloat($('#simulation-seconds-per-run').val())*1000
