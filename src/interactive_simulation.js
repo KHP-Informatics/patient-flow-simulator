@@ -7,6 +7,9 @@ function run(){
 		console.log("session not started")
 		return
 	}
+	var progress_reset_wait = parseFloat($('#simulation-seconds-per-run').val())*500 //*500 not *1000 as want half the time
+	set_progress('0%')
+	set_run_status('Simulator: Running')
 	save_patient_changes() //get changes to configuration from editor
 	save_simulation_changes()
 	default_simulation_summary()
@@ -17,6 +20,7 @@ function run(){
 	var start_time = 0
 	var patient_creation_times = {} // time: [index of each patient in patients array]
 	if(reset_results == 'reset' || window.run_number == 0){ //always have to reset on first run
+		console.log('reset mode')
 		var wards = {}
 		var ward_names = []
 		ward_config.forEach(function(el){
@@ -39,7 +43,8 @@ function run(){
 			}
 		}
 		
-	} else if(reset_results == "repeat"){
+	} else if(reset_results == "repeat" && window.run_number > 0){
+		console.log('repeating patients')
 		//put all wards back to their state at the start of the previous run
 		var wards = window.prev_result.ward_initial_state
 		var ward_names = []
@@ -56,7 +61,8 @@ function run(){
 		})
 		start_time = window.prev_result.start_time //needed so times work out for the previous set of patients
 		
-	} else {
+	} else if(reset_results == 'resume') {
+		console.log('resume mode')
 		var wards = window.prev_result.wards
 		var ward_names = []
 		var patients = []
@@ -74,6 +80,10 @@ function run(){
 		//NOT end_time + 1, end_time is the next step to run
 		start_time = window.prev_result.end_time 
 		
+	} else {
+		alert("Not a valid simulator setup. Are you trying to repeat before running?")
+		console.log("can't set up patient generation")
+		return
 	}
 
 	//now all wards are configured, save initial state 
@@ -112,8 +122,13 @@ function run(){
 	var patient_count = patients.length
 	var transfers_to_free_space = 0
 	var all_patients_created = false
+	set_progress('10%')
+	var p50 = Math.floor((end_time - start_time)/2)
 	for (var time = start_time; time < end_time; time++) {
 		console.log("step",time)
+		if(time == p50){
+			set_progress('50%')
+		}
 		patient_creation_times[time] = []
 		ward_names.forEach(function(name){
 			//console.log(name, wards[name].admitted.length)
@@ -309,9 +324,22 @@ function run(){
 	update_summary_plot(['Percent under 4h', 'Mean total occupancy', 'Length of stay efficiency', 'Staff time efficiency', 'Resource use efficiency'])
 
 	window.in_progress = false
+	set_progress('100%')
+	set_run_status('Simulator: Done')
+	window.setTimeout(function(){
+		set_progress('0%')
+		set_run_status('Simulator: Ready')
+	},progress_reset_wait)
 	return output_obj
 }
 
+function set_progress(amount){
+	document.getElementById('run-progress').style.width = amount
+}
+
+function set_run_status(text){
+	$('#run-status').text(text)
+}
 
 //generate the ward list UI
 //uses GLOBAL variables ward_config, patient_config
@@ -366,6 +394,9 @@ function init_user_interface(patient_config, ward_config, graph_container){
 
 	//update metrics summary plot
 	update_summary_plot([])
+
+	//set reun status
+	set_run_status('Simulator: Ready')
 
 }
 
