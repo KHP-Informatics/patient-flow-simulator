@@ -567,6 +567,10 @@
     prng_seed = Math.random().toString()
     //Math.seedrandom('hello.');
     set_prng_seed(prng_seed) //also updates window.prng_seed
+
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+      network_tab()
+    })
   </script>
 
 

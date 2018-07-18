@@ -604,6 +604,11 @@ function network_analysis(type){
 	}
 }
 
+function network_tab(){
+	cy.resize()
+	cy.fit()
+}
+
 //reset anything in the UI that might be left in an active state when a new simulation is started
 function reset_buttons(){
 	$('.active-analysis').removeClass('active-analysis')
