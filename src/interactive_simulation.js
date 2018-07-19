@@ -906,6 +906,8 @@ function download_previous_patients(){
 
 //build up a patient set for a given number of runs with the current config
 function make_patient_preset(runs){
+	//save any changes to sim config
+	save_patient_changes()
 	//clone config because we need to remove limit on number of patients
 	var pt_conf = deepClone(patient_config)
 	pt_conf.max_patients = Infinity
