@@ -37,7 +37,17 @@ function run(){
 			var seed_patients = true
 			
 			if(seed_patients){
+				console.log('seeding generated')
 				var seeded = seed(wards, patient_config, 0.25)
+				wards = seeded['wards']
+				patients = seeded['patients']
+			}
+		} else {
+			var seed_patients = true
+			
+			if(seed_patients){
+				console.log('seeding preset')
+				var seeded = seed_preset(wards, patient_config, 0.25)
 				wards = seeded['wards']
 				patients = seeded['patients']
 			}
@@ -670,6 +680,32 @@ function seed(wards, patient_config, target_occ){
 	var local_patient_conf = Object.assign({}, patient_config) //needed because config is global
 	var patient_generator = new PatientGenerator(local_patient_conf)
 	var patients = []
+	patient_generator.config.max_patients = Infinity
+	var ward_names = Object.keys(wards)
+	ward_names.forEach(function(el){
+		var free_beds = wards[el].capacity - wards[el].admitted.length
+		if(!isFinite(free_beds) || free_beds == 0){
+			console.log("not filling ward", el, "with free space = ", free_beds)
+		} else {
+			var n_seed = Math.floor(free_beds * target_occ)
+			patient_generator.config.initial_ward = el
+			for (var i = 0; i < n_seed; i++) {
+				var pt = patient_generator.get_single()
+				wards[el].admit(pt, wards[el], 0)
+				patients.push(pt)
+			}
+		}
+
+	})
+	return {'wards': wards, 'patients': patients}
+}
+
+function seed_preset(wards, patient_config, target_occ){
+	var local_patient_conf = Object.assign({}, patient_config) //needed because config is global
+	var patient_generator = new PatientGenerator(local_patient_conf)
+	var patients = []
+	prng_seed = "presetseed"
+    set_prng_seed(prng_seed)
 	patient_generator.config.max_patients = Infinity
 	var ward_names = Object.keys(wards)
 	ward_names.forEach(function(el){
