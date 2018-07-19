@@ -321,7 +321,7 @@ function run(){
 	//performance between runs - must be after window.performance_history is updated
 	update_performance_history()
 	update_history_plot()
-	update_summary_plot(['Percent under 4h', 'Mean total occupancy', 'Length of stay efficiency', 'Staff time efficiency', 'Resource use efficiency'])
+	update_summary_plot(['Percent under 4h', 'Mean total occupancy', 'Length of stay efficiency', 'Staff time efficiency', 'Resource use efficiency', 'Score'])
 
 	window.in_progress = false
 	set_progress('100%')
