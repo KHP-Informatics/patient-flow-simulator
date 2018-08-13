@@ -5,8 +5,11 @@ function Patient(config){
 	this.required.wards = []//array where index 0 is A&E, ... , discharge
 	this.required.waits = []
 	this.required.resources = []
+	this.required.attention = []
+	this.to_export = []
 	for(var k in config){
 		this.required[k] = config[k]
+		this.to_export.push(k)
 	}
 	this.required.progress = -1
 	this.required.in_required_ward = false
@@ -14,18 +17,33 @@ function Patient(config){
 	this.observed.wards = []
 	this.observed.entry_times = []
 	this.observed.resources = []
+	this.observed.attention = []
+	this.when_wait_met = [] //the other remaining needs of the patient when their wait limit was met
 	this.last_move_time = 0
 	this.can_move = true
 	this.target = this.required.wards[0]
 	this.id = ""
 	this.current_ward = ""
 	this.target_resource_required = 0 //what are the resource needs for this patient in the next ward they have to visit. Used for priority queues.
+	this.wait_met_logged = false //flag to ensure other needs are only logged once when wait met
+
+	//export parameters for this patient so they can be saved and recreated
+	//the returned object can be used with p = new Patient(cfg) to get this patient back
+	this.export = function(){
+		var cfg = {}
+		for (var i = 0; i < this.to_export.length; i++) {
+			var k = this.to_export[i]
+			cfg[k] = this.required[k]
+		}
+		return cfg
+	}
 
 	//move to a new ward
 	this.move = function(destination, time){
 		this.observed.wards.push(destination.name)
 		this.observed.entry_times.push(time)
 		this.observed.resources.push(0)
+		this.observed.attention.push(0)
 		this.current_ward = destination
 
 		//update timestamp
@@ -33,6 +51,9 @@ function Patient(config){
 
 		//reset ability to move
 		this.can_move = false
+
+		//reset flag for logging remaining needs
+		this.wait_met_logged = false
 
 		//has the patient moved into a required ward
 		if(destination.name == this.required.wards[this.required.progress + 1]){
@@ -51,10 +72,22 @@ function Patient(config){
 		this.observed.resources[this.observed.resources.length - 1] += amount
 	}
 
+	this.consume = function(what, amount){
+		this.observed[what][this.observed[what].length - 1] += amount
+	}
+
 	this.resource_need_remaining = function(){
 		var amount = 0;
 		if(this.required.in_required_ward){
 			amount = this.required.resources[this.required.progress] - this.observed.resources[this.observed.resources.length-1]
+		} 
+		return amount;
+	}
+
+	this.need_remaining = function(what){
+		var amount = 0;
+		if(this.required.in_required_ward){
+			amount = this.required[what][this.required.progress] - this.observed[what][this.observed[what].length-1]
 		} 
 		return amount;
 	}
@@ -70,13 +103,45 @@ function Patient(config){
 			//the observed resources per ward is not only required wards.
 			//the last element is always the current ward
 			var delta_wait = time - this.last_move_time
-			var wait_need_met = delta_wait >= this.required.waits[this.required.progress]
-			var resource_needs_met = this.required.resources[this.required.progress] - this.observed.resources[this.observed.resources.length-1] <= 0
-			if(wait_need_met & resource_needs_met){
+			if(isNaN(parseFloat(this.required.waits[this.required.progress]))){
+				var wait_need_met = false
+			} else{
+				var wait_need_met = delta_wait >= this.required.waits[this.required.progress]
+			}
+			var resource_need_remaining = this.required.resources[this.required.progress] - this.observed.resources[this.observed.resources.length-1]
+			var resource_needs_met = resource_need_remaining <= 0
+			var attn_remaining = this.need_remaining('attention')
+			var attention_needs_met = attn_remaining <= 0
+			// if(this.required.in_required_ward){
+			// 	console.log("id:", this.id,"attention met:", attention_needs_met, "wait met:", wait_need_met, "resource met", resource_needs_met)
+			// }
+
+			//state of other needs the first time wait need is met
+			if(wait_need_met && !this.wait_met_logged){
+				var other_needs = {}
+				other_needs['current_ward'] = this.current_ward.name
+				other_needs['target_ward'] = this.target
+				other_needs['attention'] = attn_remaining
+				other_needs['resources'] = resource_need_remaining
+				other_needs['time_wait_met'] = time
+				//are other needs met at the time the wait need is met
+				//i.e. are pt moving as quickly as possible
+				//ideally wouldn't separately calculate this here but avoids complicating can_move block
+				other_needs['can_move'] = (attn_remaining <=0 && resource_need_remaining <= 0)
+				this.when_wait_met.push(other_needs)
+				this.wait_met_logged = true
+			}
+
+			if(wait_need_met && resource_needs_met && attention_needs_met){
 				this.can_move = true
+				var idx = this.when_wait_met.length - 1
+				this.when_wait_met[idx]['time_others_met'] = time
+				this.when_wait_met[idx]['delay'] = time - this.when_wait_met[idx]['time_wait_met']
 			} else {
 				this.can_move = false
 			}
+
+			
 		} else {
 			//can always move if not in a required ward
 			this.can_move = true
@@ -174,6 +239,7 @@ function Ward(config){
 	config must define
 		capacity = (Int) max number of patients
 		resources = (any number) resources available per simulation step
+		attention = (any number) staff available per simulation step
 		name = (string) name of ward
 		resource_distribution = "divide_evenly",
 		accept_overflow = "always" or "never"
@@ -182,6 +248,7 @@ function Ward(config){
 	//defaults for values that should be in config
 	this.capacity = 1 
 	this.resources = 1
+	this.attention = 1
 	this.name = ""
 	this.resource_distribution = "divide_evenly"
 	this.accept_overflow = "always"
@@ -191,17 +258,36 @@ function Ward(config){
 
 	//internal values not set by config
 	// no limit on number of patient who can wait elsewhere to get in
-	if(this.queue_policy == "MaxPQ"){
+	this.create_queue = function(){
+		if(this.queue_policy == "MaxPQ"){
 		this.entry_queue = new MaxPQ(Infinity)
-	} else if(this.queue_policy == "MinPQ"){
-		this.entry_queue = new MinPQ(Infinity)
-	} else {
-		this.entry_queue = new SimpleQueue(Infinity)
+		} else if(this.queue_policy == "MinPQ"){
+			this.entry_queue = new MinPQ(Infinity)
+		} else {
+			this.entry_queue = new SimpleQueue(Infinity)
+		}
 	}
+
+	this.create_queue()
 	this.admitted = []
 	this.at_capacity = false
 
 	//functions
+	this.update_config = function(config){
+		for(var k in config){
+			this[k] = config[k]
+		}
+		var old_queue = this.entry_queue
+		this.create_queue()
+		//put any patients back on the queue
+		//correct order will be established by the new queue
+		while(old_queue.length() > 0){
+			this.add_to_queue(old_queue.next())
+		}
+		//update capacity flag
+		this.at_capacity = this.admitted.length == this.capacity
+	}
+
 	this.admit = function(patient, here, time){
 		if(this.admitted.length < this.capacity){
 			patient.move(here, time)
@@ -219,7 +305,7 @@ function Ward(config){
 		while(!this.at_capacity & this.entry_queue.length() > 0){
 			moved_count++ //need to do this before calling admit because admit changes at_capacity
 			var p = this.entry_queue.next()
-			console.log("admit from queue: moving patient id",p.id,"from",p.current_ward.name,"to",this.name)
+			//console.log("admit from queue: moving patient id",p.id,"from",p.current_ward.name,"to",this.name)
 			p.current_ward.discharge(p)
 			this.admit(p, here, time)
 		}
@@ -231,7 +317,7 @@ function Ward(config){
 	//this will create errors if patient is actually in the input_queue
 	this.admit_from = function(patient, here, time){
 		if(this.admitted.length < this.capacity){
-			console.log("admit from ward: moving patient id",patient.id,"from",patient.current_ward.name,"to",this.name)
+			//console.log("admit from ward: moving patient id",patient.id,"from",patient.current_ward.name,"to",this.name)
 			patient.current_ward.discharge(patient)
 			this.admit(patient, here, time)
 			return true
@@ -243,16 +329,22 @@ function Ward(config){
 		this.admitted.remove(patient)
 		this.at_capacity = false
 	}
-	this.spend_resources = function(){
-		if(this.resource_distribution == "divide_evenly"){
-			var amount_per_patient = this.resources/this.admitted.length
+
+
+	//spend any resource
+	this.spend = function(what, amount){
+		var policy = this.resource_distribution
+		var available = this[what]
+
+		if(policy == "divide_evenly"){
+			var amount_per_patient = available/this.admitted.length
 			this.admitted.forEach(function(el){
-				el.consume_resources(amount_per_patient)
+				el.consume(what, amount_per_patient)
 			})
-		} else if(this.resource_distribution == "lowest_first"){
+		} else if(policy == "lowest_first"){
 			this.admitted.sort(function(a, b) {
-				var remaining_A = a.resource_need_remaining(); 
-				var remaining_B = b.resource_need_remaining();
+				var remaining_A = a.need_remaining(what); 
+				var remaining_B = b.need_remaining(what);
 				if (remaining_A < remaining_B) {
 					return -1;
 				}
@@ -263,18 +355,18 @@ function Ward(config){
 				// names must be equal
 				return 0;
 			});	
-			var available = this.resources
+			
 			this.admitted.forEach(function(el){
-				var p_need = el.resource_need_remaining()
+				var p_need = el.need_remaining(what)
 				var p_gets = Math.min(available, p_need)
 				available -= p_gets
-				el.consume_resources(p_gets)
+				el.consume(what, p_gets)
 			})
 
-		} else if(this.resource_distribution == "highest_first"){
+		} else if(policy == "highest_first" || policy == "biased_highest_first"){
 			this.admitted.sort(function(a, b) {
-				var remaining_A = a.resource_need_remaining(); 
-				var remaining_B = b.resource_need_remaining();
+				var remaining_A = a.need_remaining(what); 
+				var remaining_B = b.need_remaining(what);
 				if (remaining_A > remaining_B) {
 					return -1;
 				}
@@ -285,14 +377,35 @@ function Ward(config){
 				// names must be equal
 				return 0;
 			});	
-			var available = this.resources
-			this.admitted.forEach(function(el){
-				var p_need = el.resource_need_remaining()
-				var p_gets = Math.min(available, p_need)
-				available -= p_gets
-				el.consume_resources(p_gets)
-			})
-		}
+			if(policy == "highest_first"){
+				//strictly highest need first, many patients likely to get nothing
+				//only really useful as an example, not realistic
+				this.admitted.forEach(function(el){
+					var p_need = el.need_remaining(what)
+					var p_gets = Math.min(available, p_need)
+					available -= p_gets
+					el.consume(what, p_gets)
+				})
+			} else if(policy == "biased_highest_first"){
+				//biased highest-first
+				//every patients gets a baseline amount, plus extra based on need
+				var base_prop = 0.5 // proportion of available resource that is always shared between all pt
+				var base_amount = (available * base_prop) / this.admitted.length
+				var available_biased = (available * base_prop)
+				var initial_value = 0
+				var total_need = this.admitted.reduce(function(accumulator, current_pt) {
+				  return accumulator + current_pt.need_remaining(what);
+				}, initial_value);
+
+				this.admitted.forEach(function(el){
+					var p_need = el.need_remaining(what)
+					var p_gets = available_biased * (p_need / total_need)
+					p_gets += base_amount
+					el.consume(what, p_gets)
+				})
+			}
+			
+		} 
 	}
 	this.will_accept_overflow = function(){
 		if(this.accept_overflow == "always"){
@@ -349,13 +462,16 @@ function PatientGenerator(config){
 		var current_wait = this.generate_wait(current_ward)
 		var wait_sequence = [current_wait] // should be generated
 		var current_resource = this.generate_resource(current_ward)
+		var current_attention = this.generate_attention(current_ward)
 		var resource_sequence = [current_resource] // should be generated
+		var attention_sequence = [current_resource] // should be generated
 		while(n_transfers < this.config.max_transfers & current_ward != "Exit"){
 			current_ward = this.get_next_ward(current_ward)
 			ward_sequence.push(current_ward)
 			//these should be generated
 			wait_sequence.push(this.generate_wait(current_ward))
 			resource_sequence.push(this.generate_resource(current_ward))
+			attention_sequence.push(this.generate_attention(current_ward))
 			n_transfers += 1
 		}
 		//if we exited because we reached the max number of transfers, add exit on the end
@@ -365,8 +481,9 @@ function PatientGenerator(config){
 			//these should be generated
 			wait_sequence.push(this.generate_wait(current_ward))
 			resource_sequence.push(this.generate_resource(current_ward))
+			attention_sequence.push(this.generate_attention(current_ward))
 		}
-		return {wards: ward_sequence, waits: wait_sequence, resources: resource_sequence}
+		return {wards: ward_sequence, waits: wait_sequence, resources: resource_sequence, attention: attention_sequence}
 	}
 
 	this.get_next_ward = function(ward){
@@ -379,11 +496,27 @@ function PatientGenerator(config){
 				break
 			}
 		}
+		if(next == ""){
+			console.log("no next ward found from ", ward)
+			console.log("poss_targets", poss_targets)
+			console.log("rn", rn, 'sum', sum)
+		}
 		return next
 	}
 
 	this.generate_resource = function(ward, type){
 		var limits = this.config.resource_limits[ward]
+		var r = 0
+		if(ward == "Pool" || ward == "Exit"){
+			r = getRandomInt(limits.min, limits.max)
+		} else {
+			r = poisson(limits.lambda)
+		}
+		return r;
+	}
+
+	this.generate_attention = function(ward){
+		var limits = this.config.attention_limits[ward]
 		var r = 0
 		if(ward == "Pool" || ward == "Exit"){
 			r = getRandomInt(limits.min, limits.max)
@@ -403,6 +536,46 @@ function PatientGenerator(config){
 		}
 		return r;
 	}
+}
+
+//same API as PatientGenerator but returns preset patients for each time step
+function PresetPatientGenerator(config){
+	this.time_to_patients = config
+	//internal properties
+	this.patients_created = 0
+	this.current_time_idx = 0
+	this.creation_times = _.keys(config).map(Number).sort(sortNumber)
+	this.last_time = this.creation_times[this.creation_times.length-1]
+
+	this.get = function(now){
+		//call repeatedly to iterate through creation times in order
+		//times may not be consistent with model times, e.g. if there is a jump between times in the config
+		var created = []
+		if(typeof now == "undefined"){
+			now = this.creation_times[this.current_time_idx]
+			this.current_time_idx += 1
+		}
+		if(this.time_to_patients.hasOwnProperty(now)){
+			this.time_to_patients[now].forEach(function(el){
+				np = new Patient(el)
+				created.push(np)
+				this.patients_created += 1
+			})
+		}
+
+		return created
+	}
+
+	this.get_at = function(now){
+		//get patients for a given simulation time
+		this.time_to_patients[now].forEach(function(el){
+			np = new Patient(el)
+			created.push(np)
+			this.patients_created += 1
+		})
+		return created
+	}
+
 }
 
 /*
@@ -430,12 +603,14 @@ Array.prototype.remove = function(element) {
 function calculateWaitingTimes(patients){
 	patients.forEach(function(el){
 		el.observed.waits = {}
+		el.observed.waits_arr = []
 		el.observed.wards.forEach(function(w){
 			el.observed.waits[w] = []
 		})
 		for (var i = 0; i < el.observed.wards.length - 1; i++) {
 			var delta = el.observed.entry_times[i+1] - el.observed.entry_times[i]
 			el.observed.waits[el.observed.wards[i]].push(delta)
+			el.observed.waits_arr.push(delta)
 		}
 	})
 }
@@ -480,6 +655,22 @@ function visitCounts(patients, ward){
 		}
 	})
 	var counts = arrayCount(all_visit_waits)
+	return counts
+}
+
+//delays are only logged for required wards
+//for all patients ever admitted to ward who were required to be there
+//how long where they delayed relative to the minumum time they had to spend there
+function delayCounts(patients, ward){
+	var all_visit_delays = []
+	patients.forEach(function(el){
+		el.when_wait_met.forEach(function(wwm){
+			if(wwm.current_ward == ward){
+				all_visit_delays.push(wwm.delay)
+			}
+		})
+	})
+	var counts = arrayCount(all_visit_delays)
 	return counts
 }
 
@@ -542,3 +733,60 @@ function median(values) {
 function clamp(number, min, max) {
   return Math.min(Math.max(number, min), max);
 };
+
+//deep clone for objects with cyclic references
+//use a hash to detect objects that are already known
+//needed to clone hospital state, since admitted patients reference their current ward obj internally
+//source https://stackoverflow.com/a/40293777
+function deepClone(obj, hash = new WeakMap()) {
+    // Do not try to clone primitives or functions
+    if (Object(obj) !== obj || obj instanceof Function) return obj;
+    if (hash.has(obj)) return hash.get(obj); // Cyclic reference
+    try { // Try to run constructor (without arguments, as we don't know them)
+        var result = new obj.constructor();
+    } catch(e) { // Constructor failed, create object without running the constructor
+        result = Object.create(Object.getPrototypeOf(obj));
+    }
+    // Optional: support for some standard constructors (extend as desired)
+    if (obj instanceof Map)
+        Array.from(obj, ([key, val]) => result.set(deepClone(key, hash), 
+                                                   deepClone(val, hash)) );
+    else if (obj instanceof Set)
+        Array.from(obj, (key) => result.add(deepClone(key, hash)) );
+    // Register in hash    
+    hash.set(obj, result);
+    // Clone and assign enumerable own properties recursively
+    return Object.assign(result, ...Object.keys(obj).map (
+        key => ({ [key]: deepClone(obj[key], hash) }) ));
+}
+
+
+//dump the state of all wards
+function dump_state(wards){
+	var ward_patients = {}
+	var ward_names = Object.keys(wards)
+	ward_names.forEach(function(el){
+		ward_patients[el] = []
+		wards[el].admitted.forEach(function(p){
+			var clone = deepClone(p)
+			var keys = Object.keys(clone)
+			keys.forEach(function(k){
+				if(clone[k] instanceof Function || clone[k] instanceof Ward){
+					delete clone[k]
+				}
+			})
+			ward_patients[el].push(clone)
+		})
+	})
+	return ward_patients
+}
+
+//reload the a saved state
+//not implemented yet - code should also be moved to interactive_simulation.js
+function load_state(wards, state){
+	var ward_names = Object.keys
+	ward_names.forEach(function(el){
+
+	})
+}
+

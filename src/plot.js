@@ -1,6 +1,6 @@
 //plotting simulation results
 
-function plotSimulationResults(data, container, title, xlab, ylab, width, height){
+function plotSimulationResults(data, subset, container, title, xlab, ylab, width, height, proportional){
 	var plot_name = container + '-plot'
 	$('#' + plot_name).remove(); 
  	$('#' + container).append('<canvas id="'+plot_name+'"><canvas>');
@@ -15,6 +15,13 @@ function plotSimulationResults(data, container, title, xlab, ylab, width, height
 	    options: {
 	    	responsive: false,
             maintainAspectRatio: false,
+            animation: {
+           	 duration: 0 // general animation time
+	        },
+	        hover: {
+	            animationDuration: 0 // duration of animations when hovering an item
+	        },
+	        responsiveAnimationDuration: 0,
 	        scales: {
 	            xAxes: [{
 	                type: 'linear',
@@ -45,10 +52,30 @@ function plotSimulationResults(data, container, title, xlab, ylab, width, height
 		fills[el.name] = el.fill_colour
 	})
 
+	var ward_names = Object.keys(data[subset]) 
+	var cfg = {} //convert config from list to dict
+	data.config.forEach(function(el){
+		cfg[el.name] = el
+	})
+	var plot_data = {}
+	ward_names.forEach(function(el){
+		if(el != "Pool" & el != "Exit"){
+			plot_data[el] = []
+			if(proportional){
+				for (var i = 0; i < data[subset][el].length; i++) {
+					var dt = Object.assign({},data[subset][el][i])
+					dt.y = (data[subset][el][i].y / cfg[el].capacity) * 100
+					plot_data[el].push(dt)
+				}
+			} else {
+				plot_data[el] = data[subset][el]
+			}
+		}
+	})
 
 	//push each dataset
 	//remember to add chartjs specific details
-	ward_names = Object.keys(data.results) 
+	
 	ward_names.forEach(function(el){
 		if(el != "Pool" & el != "Exit"){
 			line_data = {
@@ -58,7 +85,7 @@ function plotSimulationResults(data, container, title, xlab, ylab, width, height
 	            borderColor: fills[el],
 	            backgroundColor: fills[el],
 	            //steppedLine: true, //alternative to straigh lines between points, technically more correct
-	            data: data.results[el]
+	            data: plot_data[el]
 	        }
 			scatter_config.data.datasets.push(line_data)
 		}
@@ -92,11 +119,31 @@ function plotWaitingTimeFreq(patients, ward, container, width, height, text_outp
 	var result = {} 
 	result['results'] = {"frequency": points}
 	result['config'] = [{name:"frequency", fill_colour: "#ccc"}]
-	plotSimulationResults(result, container, "Waiting time distribution: " + ward, "waiting time", "count", width, height)
+	plotSimulationResults(result, 'results', container, "Waiting time distribution: " + ward, "waiting time", "count", width, height)
 	var mean = total/n
 	$('#' + text_output).text(mean.toFixed(2))
+	return mean
 }
 
+//histogram of delays in required wards
+function plotDelayTimeFreq(patients, ward, container, width, height, text_output){
+	var counts = delayCounts(patients, ward)
+	points = []
+	var total = 0
+	var n = 0
+	for (var i = 0; i < counts['counts'].length; i++) {
+		points.push({'x': counts['values'][i], 'y': counts['counts'][i]})
+		total += counts['values'][i] * counts['counts'][i]
+		n += counts['counts'][i]
+	}
+	var result = {} 
+	result['results'] = {"frequency": points}
+	result['config'] = [{name:"frequency", fill_colour: "#ccc"}]
+	plotSimulationResults(result, 'results', container, "Delay distribution: " + ward, "delay time", "count", width, height)
+	var mean = total/n
+	$('#' + text_output).text(mean.toFixed(2))
+	return mean
+}
 
 function plotPathLengthDistribution(patients, container, width, height, total_paths_output, top_paths_output, top_paths_limit){
 	var paths = {}// used to count unique sequences and occurrences of each sequence
@@ -123,7 +170,7 @@ function plotPathLengthDistribution(patients, container, width, height, total_pa
 	var result = {} 
 	result['results'] = {"frequency": points}
 	result['config'] = [{name:"frequency", fill_colour: "#ccc"}]
-	plotSimulationResults(result, container, "Path length distribution", "Path length (wards)", "Patients", width, height)
+	plotSimulationResults(result, 'results', container, "Path length distribution", "Path length (wards)", "Patients", width, height)
 	console.log(result)
 	$('#' + total_paths_output).text(Object.keys(paths).length)
 
@@ -167,4 +214,173 @@ function plotPathLengthDistribution(patients, container, width, height, total_pa
 	tbl += "</tbody>"
 	$('#' + top_paths_output).html(tbl)
 
+}
+
+function plotSimulationHistory(data, subset, container, title, xlab, ylab, width, height){
+	var plot_name = container + '-plot'
+	$('#' + plot_name).remove(); 
+ 	$('#' + container).append('<canvas id="'+plot_name+'"><canvas>');
+	var ctx = document.getElementById(plot_name).getContext("2d");
+    ctx.canvas.width = width;
+    ctx.canvas.height = height;
+	var scatter_config = {
+	    type: 'line',
+	    data: {
+	        datasets: []
+	    },
+	    options: {
+	    	responsive: false,
+            maintainAspectRatio: false,
+            animation: {
+           	 duration: 0 // general animation time
+	        },
+	        hover: {
+	            animationDuration: 0 // duration of animations when hovering an item
+	        },
+	        responsiveAnimationDuration: 0,
+	        scales: {
+	            xAxes: [{
+	                type: 'linear',
+	                position: 'bottom',
+                    beginAtZero: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: xlab
+                      }
+	            }],
+                yAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: ylab
+                      }
+                }]
+	        },
+            title: {
+                display: true,
+                text: title
+            }
+	    }
+	}
+
+
+
+	
+	var plot_data = []
+	plot_data[subset] = []
+	for (var i = 0; i < data.length; i++) {
+		plot_data[subset].push({x: i, y: data[i][subset]})
+	}
+
+
+	//push each dataset
+	//remember to add chartjs specific details
+
+	line_data = {
+		label: subset,
+        lineTension: 0, //set to zero to draw stright lines between points
+        fill: false,
+        //steppedLine: true, //alternative to straigh lines between points, technically more correct
+        data: plot_data[subset]
+    }
+	scatter_config.data.datasets.push(line_data)
+
+
+	//window.myLine = new Chart(ctx, scatter_config);
+    var myLine = new Chart(ctx, scatter_config);
+    return myLine;
+}
+
+function plotSimulationSummary(data, subset, container, title, xlab, ylab, width, height){
+	var plot_name = container + '-plot'
+	$('#' + plot_name).remove(); 
+ 	$('#' + container).append('<canvas id="'+plot_name+'"><canvas>');
+	var ctx = document.getElementById(plot_name).getContext("2d");
+    ctx.canvas.width = width;
+    ctx.canvas.height = height;
+    var bar_config = {
+    	type: 'horizontalBar',
+    	data: {
+    		labels: [],
+    		datasets: [{
+    			label: 'Metrics',
+    			data: [],
+    			backgroundColor: []
+    		}]
+    	},
+ 		options: {
+ 			responsive: false,
+            maintainAspectRatio: false,
+            animation: {
+           	 duration: 0 // general animation time
+	        },
+	        hover: {
+	            animationDuration: 0 // duration of animations when hovering an item
+	        },
+	        responsiveAnimationDuration: 0,
+	        events: [], //disable all mouse events - hover creates errors with custom colours on hover otherwise
+ 			title: {
+ 				display: true,
+ 				text: title
+ 			},
+ 			scales: {
+ 				xAxes: [{
+ 					ticks: {
+ 						max: 100,
+ 						min:0
+ 					}
+ 				}]
+ 			}
+ 		}
+    }
+
+	//push each dataset
+	//remember to add chartjs specific details
+	// data = {'occ' : 90, 'los eff': 55}
+	// subset = ['occ', 'los eff']
+	subset.forEach(function(el){
+		bar_config.data.labels.push(el)
+		var vals = data.map(function(res){return res[el]})
+		var sum = vals.reduce(function(acc, val) { return acc + val; }, 0)
+		var mean = sum / vals.length
+		if(el == "Mean total occupancy"){
+			var col = colourmap_gr(mean)	
+		} else {
+			var col = colourmap_rg(mean)	
+		}
+		bar_config.data.datasets[0].data.push(mean)
+		bar_config.data.datasets[0].backgroundColor.push(col)
+	})
+
+
+	//window.myLine = new Chart(ctx, scatter_config);
+    var myBarChart = new Chart(ctx, bar_config);	
+    return myBarChart;	
+}
+
+function colourmap_rg(val){
+	var v, r, g, b, a 
+	v = val/100
+	if(v <= 0.8){
+		r = 255
+	} else {
+		r = (1-v) * 255
+	}
+	g = v * 255
+	b = 60
+	a = 1
+	return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')'
+}
+
+function colourmap_gr(val){
+	var v, r, g, b, a
+	v = val/100
+	if(v <= 0.8){
+		g = 255
+	} else {
+		g = (1-v) * 255
+	}
+	r = v * 255
+	b = 60
+	a = 1
+	return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')'
 }

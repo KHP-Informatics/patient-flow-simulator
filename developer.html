@@ -88,13 +88,13 @@
 <h4>Details</h4>
 <p>The <code>transfer_probability</code> object describes the edges in a graph were nodes are wards and edges are patient transfers. The weight of each edge is the probability that a patient in the source ward will be transferred to the target ward. It must ultimately be possible for all patients to reach the (virtual) Exit ward. </p>
 
-<p><code>resource_limits</code> and <code>wait_limits</code> have the same structure. They provide the parameters for poisson distributions (the lambda) used to generate the resource need and stay duration required for each patient in each ward. The min and max parameters clamp the possible generated values. Importantly, the settings for the Pool and Exit wards <b>must not be changed</b>. The Exit ward is not described in the <code>wait_limits</code> object because the limit must be set to Javascript <code>Infinity</code>, which is not possible in JSON.</p>
+<p><code>resource_limits</code>, <code>wait_limits</code> and <code>attention_limits</code> have the same structure. They provide the parameters for poisson distributions (the lambda) used to generate the resource/ staff time need and stay duration required for each patient in each ward. The min and max parameters clamp the possible generated values. Importantly, the settings for the Pool and Exit wards <b>must not be changed</b>. The Exit ward is not described in the <code>wait_limits</code> object because the limit must be set to Javascript <code>Infinity</code>, which is not possible in JSON.</p>
 
 <p>The <code>batch_arrival_*</code> properties parameterise the poisson distrubution controlling the arrival rate at A+E. Per simulation step, this distribution is used to determine the number of new patients arriving.</p>
 
 <h4>User editable</h4>
 
-<p><code>transfer_probability</code>, <code>resource_limits</code>, <code>wait_limits</code> and <code>initial_ward</code> are entirely determined by the configuration file and cannot be changed by users. For all other settings, the configuration file sets the default but users are not restricted to your settings.</p>
+<p><code>transfer_probability</code>, <code>resource_limits</code>, <code>wait_limits</code>, <code>attention_limits</code> and <code>initial_ward</code> are entirely determined by the configuration file and cannot be changed by users. For all other settings, the configuration file sets the default but users are not restricted to your settings.</p>
 
   </div>
   <div class="col-md-6">
@@ -140,6 +140,15 @@
       ...
       "Pool":{"min":1,"max":1} //do not change
   },
+  "attention_limits" : {
+    "Emergency" : {
+      "min" : 1,
+      "max" : 10,
+      "lambda" : 10
+      },
+      ...
+      "Pool":{"min":1,"max":1} //do not change
+  },
   "max_transfers" : 10, //to prevent infinitely long visits
   "max_patients" : 200, //limit number of patients that can be generated
   "batch_arrival_min" : 0,
@@ -157,9 +166,11 @@
   <div class="col-md-6">
   <h3>Ward config</h3>
 <h4>Details</h4>
-<p><code>ward_config</code> is a list of objects, with one object per ward (except Exit and Pool which cannot be configured). <code>resource_distribution</code> can be one of "divide_evenly", "highest_first" or "lowest_first". <code>accept_overflow</code> can either be "always" or "never".</p>
+<p><code>ward_config</code> is a list of objects, with one object per ward (except Exit and Pool which cannot be configured). <code>resource_distribution</code> can be one of "divide_evenly", "highest_first", "biased_highest_first" or "lowest_first". <code>accept_overflow</code> can either be "always" or "never".</p>
 
 <p><code>queue_policy</code> must be the name of a queue object. The default options are "MaxPQ" (highest need first), "MinPQ" (lowest need first) and "SimpleQueue" (first come, first served). Custom queue types that implement different policies can be added, see below.</p>
+
+<p><code>begin_boarding_after</code> is currently only used by the simulator for the Emergency ward.</p>
 
 <h4>User editable</h4>
 <p>All settings apart from <code>fill_colour</code> can be changed by the user, all you can set is the default.</p>
@@ -220,16 +231,19 @@
 <h3>Simulation config</h3>
 
 <h4>Details</h4>
-<code>emergency_wait_target</code> is the maximum length of time patients should have to wait in A+E before being admitted to another ward, definied as the number of simulation steps. 
+<p><code>emergency_wait_target</code> is the maximum length of time patients should have to wait in A+E before being admitted to another ward, definied as the number of simulation steps. <code>*_cost</code> is the price per unit of each of the ward parameters. </p>
 
 <h4>User editable</h4>
-<p>All options can be changed be the user, the configuration file only sets the default.</p>
+<p>Costs cannot be edited by the user. All other options can be changed be the user and the configuration file only sets the default.</p>
   </div>
   <div class="col-md-6">
   <h3>Sample code</h3>
 <pre><code>"simulation_config" : {
   "steps" : 100, //steps until simulation ends
-  "emergency_wait_target" : 15
+  "emergency_wait_target" : 15,
+  "staff_cost": 50,
+  "resource_cost": 10,
+  "bed_cost": 100
 }
 </code></pre>
   </div>

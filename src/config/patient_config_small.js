@@ -59,6 +59,42 @@ var patient_config = {
 			max: 1
 		}
 	},
+	//how much staff time does each patient need in each ward
+	attention_limits : {
+		"Emergency" : {
+			min: 1,
+			max: 10,
+			lambda: 10
+		},
+		"Observation" : {
+			min: 1,
+			max: 10,
+			lambda: 15
+		},
+		"Medical" : {
+			min: 1,
+			max: 10,
+			lambda: 17
+		},
+		"Surgery" : {
+			min: 1,
+			max: 10,
+			lambda: 20
+		},
+		"Recovery" : {
+			min: 1,
+			max: 10,
+			lambda: 7
+		},
+		"Exit": {
+			min: 1,
+			max: 1
+		},
+		"Pool": {
+			min: 1,
+			max: 1
+		}
+	},
 	//what is the min and max time a patient might require in each ward
 	wait_limits : {
 		"Emergency" : {

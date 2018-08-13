@@ -47,3 +47,27 @@ body {
 .spacer {
   padding-bottom: 50px;
 }
+
+.hidden {
+  display:none;
+}
+
+a {
+  color: #337ab7;
+}
+
+.form-check-input {
+  margin-top: 0;
+}
+
+.bg-blue {
+  background-color: #337ab7;
+}
+
+.row-margin {
+  margin-top: 10px;
+}
+
+.btn-margin {
+  margin: 5px;
+}
